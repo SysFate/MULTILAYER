@@ -1,15 +1,6 @@
 <div align="center">
 
 ![alt text](logo/multilayer2.png)
-</div>
-
-# MULTILAYER Tool
-
-<!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
-
-## Description
-
-A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
 
 ## Informations / Authors
 
@@ -21,6 +12,16 @@ A powerfull tool for visualising, navigate and analysing spatial transcriptomics
 | Author  | MENDOZA PARRA Marco ([Github](https://github.com/SysFate))                                    |
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
+
+</div>
+
+# MULTILAYER Tool
+
+<!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
+
+## Description
+
+A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
 
 ## Run
 
@@ -82,6 +83,10 @@ pip install python-louvain
 
 A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
 
+## Run
+
+Launch : `python3 Multilayer_Compressor.py`
+
 ## Dependencies
 
 ###### - Numpy
@@ -109,7 +114,7 @@ pip install pandas
 </li>
 </ul>
 
-
+# TUTORIAL
 
 
 <!--pip install spatialde-->
