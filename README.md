@@ -1,6 +1,7 @@
 <div align="center">
 
 ![alt text](logo/multilayer2.png)
+</div>
 
 ## Informations / Authors
 
@@ -13,7 +14,7 @@
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
 
-</div>
+
 
 # MULTILAYER Tool
 
