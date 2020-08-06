@@ -1,3 +1,8 @@
+<div align="center">
+
+![alt text](logo/multilayer2.png)
+</div>
+
 # MULTILAYER Tool
 
 <!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
@@ -78,9 +83,12 @@ pip install python-louvain
 <ul>
 <li> 
 
-[Berglund & al.](https://www.nature.com/articles/s41467-018-04724-5) : [Data](Data/Prostate_cancer) 
+[Berglund & al](https://www.nature.com/articles/s41467-018-04724-5) - [Prostate cancer data](Data/Prostate_cancer) 
+</li>
+<li>
 
-</li><li> [DCP2](#2-dcp2-hard)</li>
+[Other](https://www.nature.com/articles/s41467-018-04724-5) - [Data](Data/) 
+</li>
 </ul>
 
 
