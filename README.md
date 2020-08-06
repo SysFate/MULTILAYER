@@ -73,6 +73,14 @@ pip install python-louvain
 
 # MULTILAYER Compressor
 
+# DATA
+
+<ul>
+<li> [Berglund & al.](https://www.nature.com/articles/s41467-018-04724-5) : [Data](Data/Prostate_cancer) </li><li> [DCP2](#2-dcp2-hard)</li>
+</ul>
+
+
+
 
 <!--pip install spatialde-->
 
