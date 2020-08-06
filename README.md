@@ -78,6 +78,24 @@ pip install python-louvain
 
 # MULTILAYER Compressor
 
+## Description
+
+A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
+
+## Dependencies
+
+###### - Numpy
+
+```bash
+pip install numpy
+```
+
+###### - Pandas
+
+```bash
+pip install pandas
+```
+
 # DATA
 
 <ul>
