@@ -1,25 +1,25 @@
-# SysFate Tool Viewer
+# MULTILAYER Tool
 
 <!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
 
 ## Description
 
-A powerfull tool for visualising, navigate and analysing data from spatial transcriptomics.
+A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
 
 ## Informations / Authors
 
 |         |                                                                                               |
 | ------- | --------------------------------------------------------------------------------------------- |
-| Author  | MOEHLIN Julien ([Github](https://github.com/JulienMoehlin), [Gitlab](https://gitlab.com/julienmoehlin))              |
+| Author  | MOEHLIN Julien ([Github](https://github.com/JulienMoehlin), [Gitlab](https://gitlab.com/julienmoehlin)) |
 | Author  | MOLLET Bastien                                                                                |
-| Author  | COLOMBO Bruno                                                                                |
+| Author  | COLOMBO Bruno                                                                                 |
 | Author  | MENDOZA PARRA Marco ([Github](https://github.com/SysFate))                                    |
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
 
 ## Run
 
-Launch : `python3 tool.py`
+Launch : `python3 Multilayer.py`
  
 ## Dependencies
 
@@ -71,6 +71,7 @@ pip install networkx
 pip install python-louvain
 ```
 
+# MULTILAYER Compressor
 
 
 <!--pip install spatialde-->
