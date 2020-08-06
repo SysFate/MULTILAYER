@@ -16,7 +16,7 @@
 
 
 
-# MULTILAYER Tool
+# MULTILAYER TOOL
 
 <!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
 
@@ -78,7 +78,7 @@ pip install networkx
 pip install python-louvain
 ```
 
-# MULTILAYER Compressor
+# MULTILAYER COMPRESSOR
 
 ## Description
 
@@ -104,6 +104,7 @@ pip install pandas
 
 # DATA
 
+All data available
 <ul>
 <li> 
 
