@@ -104,7 +104,7 @@ pip install pandas
 
 # DATA
 
-All data available
+All data available : (Article - data)
 
 <ul>
 <li> 
@@ -118,8 +118,3 @@ All data available
 </ul>
 
 # TUTORIAL
-
-
-<!--pip install spatialde-->
-
-
