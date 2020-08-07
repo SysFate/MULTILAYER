@@ -82,7 +82,7 @@ pip install python-louvain
 
 ## Description
 
-A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
+Compress matrix.
 
 ## Run
 
