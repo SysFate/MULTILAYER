@@ -82,7 +82,7 @@ pip install python-louvain
 
 ## Description
 
-Compress matrix.
+For high resolution dataset, we developed module for compress data. Multilayer compressor is able to merge several gexels in one big gexel.
 
 ## Run
 
