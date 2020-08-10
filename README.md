@@ -22,7 +22,7 @@
 
 ## Description
 
-A powerfull tool for visualising, navigate and analysing spatial transcriptomics.
+A powerfull tool for visualising, navigate and analysing spatial transcriptomics data.
 
 ## Run
 
@@ -82,7 +82,7 @@ pip install python-louvain
 
 ## Description
 
-For high resolution dataset, we developed module for compress data. Multilayer compressor is able to merge several gexels in one big gexel.
+We developed module for compress data. Multilayer compressor is able to merge several gexels in one big gexel.
 
 ## Run
 
