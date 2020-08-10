@@ -113,7 +113,15 @@ All data available : (Article - data)
 </li>
 <li>
 
-[Other](https://www.nature.com/articles/s41467-018-04724-5) - [Data](Data/) 
+[Asp & al](https://www.sciencedirect.com/science/article/abs/pii/S0092867419312826?via%3Dihub) - [Heart development data](Data/Development_heart) 
+</li>
+<li>
+
+[Moncada & al](https://www.nature.com/articles/s41587-019-0392-8) - [Pancreatic adenocarcinoma](Data/Pancreatic_adenocarcinoma) 
+</li>
+<li>
+
+[Rodriques & al](https://science.sciencemag.org/content/363/6434/1463) - [High resolution brain](Data/High_resolution_brain) 
 </li>
 </ul>
 
