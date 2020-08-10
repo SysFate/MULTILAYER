@@ -127,4 +127,4 @@ All data available : (Article - data)
 
 # TUTORIAL
 
-Multilayer [tutorial](/MULTILAYER-Tutorial-v0.1)
+Multilayer [tutorial](/MULTILAYER-Tutorial-v0.1.pdf)
