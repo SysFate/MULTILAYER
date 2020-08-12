@@ -9,7 +9,7 @@
 | ------- | --------------------------------------------------------------------------------------------- |
 | Author  | MOEHLIN Julien ([Github](https://github.com/JulienMoehlin), [Gitlab](https://gitlab.com/julienmoehlin)) |
 | Author  | MOLLET Bastien                                                                                |
-| Author  | COLOMBO Bruno                                                                                 |
+| Author  | COLOMBO Bruno Maria                                                                                |
 | Author  | MENDOZA PARRA Marco ([Github](https://github.com/SysFate))                                    |
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
