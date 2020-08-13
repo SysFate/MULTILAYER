@@ -1,6 +1,6 @@
 <div align="center">
 
-![alt text](logo/multilayer2.png)
+[![Logo](logo/multilayer2.png)](https://www.sysfate.org/)
 </div>
 
 ## Informations / Authors
