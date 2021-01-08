@@ -151,7 +151,7 @@ All data available : (Article - data)
 
 <li>
 
-[Liu & al](https://www.sciencedirect.com/science/article/abs/pii/S0092867420313908) - [All mouse embryo](Data/All_mouse_embryo) 
+[Liu & al](https://www.sciencedirect.com/science/article/abs/pii/S0092867420313908) - [Whole mouse embryo](Data/Whole_mouse_embryo) 
 </li>
 </ul>
 
