@@ -22,7 +22,10 @@
 
 ## Description
 
-A powerfull tool for visualising, navigate and analysing spatial transcriptomics data.
+Inspired by contextual pixel classification strategies applied to image analysis, we have developed MULTILAYER, 
+allowing to stratify spatially-resolved transcriptome maps into functionally-relevant molecular substructures. 
+For this, MULTILAYER applies agglomerative clustering within contiguous locally-defined transcriptomes (herein 
+defined as gene expression elements or gexels), combined with community detection methods for graph partitioning.
 
 ## Run
 
