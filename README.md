@@ -11,7 +11,7 @@
 | ------- | --------------------------------------------------------------------------------------------- |
 | Author  | MOEHLIN Julien ([Github](https://github.com/JulienMoehlin), [Gitlab](https://gitlab.com/julienmoehlin)) |
 | Author  | MOLLET Bastien                                                                                |
-| Author  | COLOMBO Bruno Maria                                                                                |
+| Author  | COLOMBO Bruno Maria                                                                           |
 | Author  | MENDOZA PARRA Marco ([Github](https://github.com/SysFate))                                    |
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
@@ -19,8 +19,6 @@
 
 
 # MULTILAYER TOOL
-
-<!--[![DIO](/doc/images/DOI.svg)](https://www.nature.com/articles/s41598-018-28948-z)-->
 
 ## Description
 
@@ -80,6 +78,12 @@ pip install networkx
 pip install python-louvain
 ```
 
+###### - Louvain
+
+```bash
+pip install python-louvain
+```
+
 ###### - Python Imaging Library / PIL
 
 ```bash
@@ -119,20 +123,38 @@ All data available : (Article - data)
 
 [Berglund & al](https://www.nature.com/articles/s41467-018-04724-5) - [Prostate cancer data](Data/Prostate_cancer) 
 </li>
+
 <li>
 
 [Asp & al](https://www.sciencedirect.com/science/article/abs/pii/S0092867419312826?via%3Dihub) - [Heart development data](Data/Development_heart) 
 </li>
+
 <li>
 
 [Moncada & al](https://www.nature.com/articles/s41587-019-0392-8) - [Pancreatic adenocarcinoma](Data/Pancreatic_adenocarcinoma) 
 </li>
+
 <li>
 
 [Rodriques & al](https://science.sciencemag.org/content/363/6434/1463) - [High resolution brain](Data/High_resolution_brain) 
+</li>
+
+<li>
+
+[Ståhl & al](https://science.sciencemag.org/content/353/6294/78) - [Breast cancer](Data/Breast_cancer) 
+</li>
+
+<li>
+
+[Ståhl & al](https://science.sciencemag.org/content/353/6294/78) - [Mouse olfactory bulb](Data/Mouse_Olfactory_Bulb) 
+</li>
+
+<li>
+
+[Liu & al](https://www.sciencedirect.com/science/article/abs/pii/S0092867420313908) - [All mouse embryo](Data/All_mouse_embryo) 
 </li>
 </ul>
 
 # TUTORIAL
 
-Multilayer [tutorial](/MULTILAYER-Tutorial-v0.1.pdf)
+Multilayer [tutorial](/MULTILAYER-Tutorial.pdf)
