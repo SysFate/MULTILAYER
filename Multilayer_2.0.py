@@ -144,10 +144,16 @@ class StartGUI(tk.Tk):
 		frame.tkraise()
 
 	def roundVal(self, x):
+		"""
+		Round values
+		"""
 		new = x.split('x')
 		return(f'{round(float(new[0]))}x{round(float(new[1]))}')
 
 	def create_matrix(self, sampleData, runObject):
+		"""
+		Prepare raw, norm, diff. genes and patterns
+		"""
 		sample = Sample(os.path.basename(sampleData))
 		dirNamePath = os.path.join(os.path.dirname(os.path.abspath(runObject.raw[0])), 'Similarity_Matrix_Sample')
 		if not os.path.exists(dirNamePath):
@@ -192,8 +198,6 @@ class StartGUI(tk.Tk):
 					if runObject.diff == ['']:
 						sample.diff = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float)
 						sample.diff += 1
-			#else:
-				#print('No Normalisation')
 		if runObject.mode == 'explore' and runObject.norm != ['']:
 			dic_geneSampleNorm = dict(runObject.dicSample[sample.name].norm.apply(self.createGeneSample, axis=1))
 			runObject.dicSample[sample.name].dicSampleNorm = dic_geneSampleNorm
@@ -225,7 +229,6 @@ class StartGUI(tk.Tk):
 		elif index <= len(runObject.diff):
 			index = len(runObject.diff)
 			indexStr = 'diff'
-	
 		while len(to_process) < index:
 			if threading.active_count() <= runObject.numberCPU:
 				file = runObject.raw[len(to_process)]
@@ -272,8 +275,10 @@ class StartGUI(tk.Tk):
 		geneSample.dic_coordinate_count = x.to_dict()
 		return geneSample
 
-	###Agglomerative
 	def agglomerative(self, dicGeneSample, sample, runObject, indexMinPattern):
+		"""
+		Agglomerative clustering for define contigous pattern
+		"""
 		sample.infoPattern = []
 		for geneSample in dicGeneSample.keys():
 			tempListCoordinate = []
@@ -302,6 +307,9 @@ class StartGUI(tk.Tk):
 						sample.infoPattern.append((len(listTemp), dicGeneSample[geneSample].geneID))
 	
 	def generateMatrixSimilarity(self, dicGeneSample, runObject, pathDirSave, name):
+		"""
+		Compare all patterns and generate a similarity matrix
+		"""
 		print('Similarity Matrix')
 		startTime_sim = time.time()
 		list_similarity = []
@@ -337,7 +345,6 @@ class StartGUI(tk.Tk):
 									index_find += 1
 								else:
 									list_temp.append(np.NaN)
-							#TODO
 							elif runObject.method == 'Dice':
 								inter = len(set_gene_query.intersection(set(dicGeneSample[geneComp].dic_pattern[int(numberPatternComp)])))
 								union = len(set_gene_query.union(set(dicGeneSample[geneComp].dic_pattern[int(numberPatternComp)])))
@@ -422,7 +429,7 @@ class StartGUI(tk.Tk):
 
 class StartPageGUI(tk.Frame):
 	"""
-	First page
+	Home page
 	"""
 	def __init__(self, parent, controller, runObject):
 		tk.Frame.__init__(self, parent)
@@ -467,6 +474,9 @@ class StartPageGUI(tk.Frame):
 			print('cluster')
 
 class InputGUIBatch(tk.Frame):
+	"""
+	Input Batch
+	"""
 	def __init__(self, parent, controller, runObject):
 		tk.Frame.__init__(self, parent)
 		self.controller = controller
@@ -670,7 +680,6 @@ class InputGUIExplore(tk.Frame):
 		self.runObject.diff = ['']
 		print('All selected files are reset !')
 
-	#Switch page
 	def _next(self):
 		if self.runObject.raw[0] == '':
 			tk.messagebox.showwarning('No raw file(s) selected !', 'You have to select at least one raw matrix.', icon='warning')
@@ -793,7 +802,6 @@ class ParamGUI(tk.Frame):
 		elif self.runObject.mode == 'cluster':
 			self.controller.show_frame('InputGUIBatch', self.runObject)
 
-	#Switch page
 	def _next(self):
 		try:
 			if self.numberCPU.get() > multiprocessing.cpu_count():
@@ -808,6 +816,8 @@ class ParamGUI(tk.Frame):
 				self.runObject.indexGetParameters = 1
 				self.runObject.upDiffThreshold = float(self.comboUp.get())
 				self.runObject.downDiffThreshold = float(self.comboDown.get())
+				print('==============================')
+				print('Selected Parameters')
 				print('==============================')
 				print(f'sizeX : {self.runObject.sizeX}')
 				print(f'sizeY : {self.runObject.sizeY}')		
@@ -919,6 +929,9 @@ class AutocompleteEntry(Entry):
 		return [w for w in self.list_input_gene_name if re.match(pattern, w)]
 
 class GoGUI(object):
+	"""
+	Gene Ontology GUI
+	"""
 	def __init__(self, master, listGeneQuery, listGOBank, title):
 		self.master = master
 		self.dic_Com_ListGene = {}
@@ -1028,7 +1041,6 @@ class GoGUI(object):
 			pvalue, index = vals
 			new_pvalues[index] = new_values[i]
 		return new_pvalues
-
 
 	def inter(self, liste1, liste2):
 		liste1 = set(liste1)
@@ -1408,6 +1420,9 @@ class mainGUI(object):
 		self.frame.pack(fill=X, side=LEFT)
 
 	def goHome(self):
+		"""
+		Back to home
+		"""
 		closeGUI = tk.messagebox.askquestion('Go Home', 'All loaded data will be lost.', icon='warning')
 		if closeGUI == 'yes':
 			self.master.destroy()
@@ -3014,6 +3029,9 @@ class matrixGUI(object):
 			y2 += self.indexMiniSizeGexel
 
 	def comMatrix(self, value):
+		"""
+		Communities matrix
+		"""
 		try:
 			self.listBoxCommunities.delete(0, END)
 			self.displayNumberPerCommunities.set('')
@@ -3097,6 +3115,9 @@ class matrixGUI(object):
 			y2 += self.indexMiniSizeGexel
 
 	def patternMatrix(self):
+		"""
+		Display the selected gene's pattern
+		"""
 		if self.searchGene.get() in self.dicGeneSample.keys():
 			self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
 				(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
@@ -3164,6 +3185,9 @@ class matrixGUI(object):
 				tk.messagebox.showwarning('No pattern detected', 'No pattern is detected for the selected gene.', icon='warning')
 		
 	def matrixForGene(self, colorList):
+		"""
+		Display a selected gene
+		"""
 		indexGexelCreate = 0
 		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
 			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
@@ -3312,6 +3336,9 @@ class matrixGUI(object):
 				tk.messagebox.showwarning('Name of gene is not found', 'Please provide a correct gene name.', icon='warning')
 	
 	def matrixLog(self, colorList):
+		"""
+		Display matrix with log values
+		"""
 		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
 			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
 		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
