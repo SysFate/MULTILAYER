@@ -3494,8 +3494,8 @@ def main():
 	if run.indexRun == 1:
 		root = tk.Tk()
 		if run.mode == 'explore':
-			print(f'X {run.sizeX} X cal {run.calculatedX}')
-			print(f'Y {run.sizeY} Y cal {run.calculatedY}')
+			#print(f'X {run.sizeX} X cal {run.calculatedX}')
+			#print(f'Y {run.sizeY} Y cal {run.calculatedY}')
 			if run.sizeX < run.calculatedX or run.sizeY < run.calculatedY:
 				tempX = 0
 				tempY = 0
