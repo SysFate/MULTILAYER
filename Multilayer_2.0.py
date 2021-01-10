@@ -364,6 +364,9 @@ class StartGUI(tk.Tk):
 		StartGUI.matrixForLouvain(StartGUI, runObject.dicSample[name])
 
 	def matrixForLouvain(self, sample):
+		"""
+		Create file for Louvain analysis
+		"""
 		dico_tot ={}
 		sample.simMatrix.apply(lambda x: StartGUI.dico_df(StartGUI, x, dico_tot))
 		dico_fin = StartGUI.dico_final(StartGUI, dico_tot)
@@ -381,6 +384,9 @@ class StartGUI(tk.Tk):
 		return dico_final
 
 	def normalization(self, data, sample, runObject, dirNamePath):
+		"""
+		Quantile normalization
+		"""
 		print(f'### - Normalisation - {sample.name}')
 		if runObject.transpose == True:
 			df = pd.read_csv(data, sep='\t', index_col=[0]).astype(float).transpose()
@@ -404,6 +410,9 @@ class StartGUI(tk.Tk):
 			sample.norm.to_csv(os.path.join(dirNamePath, f'{sample.name}_size{runObject.minPattern}_{runObject.method}_Norm.tsv'), sep='\t')
 
 	def diffgene(self, sample, runObject, dirNamePath):
+		"""
+		Differentially expressed genes
+		"""
 		print(f'### - Differentially expression - {sample.name}')
 		if runObject.diff == [''] or runObject.mode == 'cluster':
 			sample.diff['mean'] = sample.diff.mean(axis=1)
@@ -841,6 +850,7 @@ class ParamGUI(tk.Frame):
 
 class AutocompleteEntry(Entry):
 	"""
+	Autocomplete list with genes names
 	AutocompleteEntry(list_input_gene_name, frame_Entry, frame_ListBox)
 	"""
 	def __init__(self, list_input_gene_name, frame_Entry, frame_ListBox):
@@ -1048,6 +1058,9 @@ class GoGUI(object):
 		return list(liste2 & liste1)
 
 	def analysisGO(self):
+		"""
+		Perform gene ontology enrichment analysis
+		"""
 		if 'All - Communities' in self.titleGO:
 			list_GO = []
 			dic = {}
@@ -1136,6 +1149,9 @@ class GoGUI(object):
 			self.table.to_csv(filename, sep='\t')
 
 class HeatmapGOAll(object):
+	"""
+	Heatmap for communities
+	"""
 	def __init__(self, master, listGeneQuery, table, titleGO, comboGOBank, minV, maxV, annotation):
 		self.master = master
 		self.frameTOP = tk.Frame(self.master)
@@ -1176,6 +1192,9 @@ class HeatmapGOAll(object):
 			df.iloc[::-1].to_csv(filename, sep='\t')
 
 class HeatmapGO(object):
+	"""
+	Heatmap for gene ontology enrichment analysis
+	"""
 	def __init__(self, master, listGeneQuery, table, titleGO, comboGOBank):
 		self.master = master
 		self.frameTOP = tk.Frame(self.master)
@@ -1251,6 +1270,9 @@ class HeatmapGO(object):
 			return 0
 
 class Barplot(object):
+	"""
+	Barplot for gene ontology enrichment analysis
+	"""
 	def __init__(self, master, df, titleGO, comboGOBank):
 		self.master = master
 		self.master.title(f'Barplot GO Terms - {titleGO} - {comboGOBank}')
@@ -1294,6 +1316,9 @@ class Barplot(object):
 		self.master.destroy()
 
 class mainGUI(object):
+	"""
+	Main GUI panel
+	"""
 	def __init__(self, master, runObject):
 		self.master = master
 		self.master.protocol('WM_DELETE_WINDOW', self.close_windows)
@@ -1453,6 +1478,9 @@ class mainGUI(object):
 			listBox.insert(END, i)
 
 	def selection_listbox(self, event):
+		"""
+		Select sample in batch mode
+		"""
 		self.sampleSelected = self.listCluster.get(ACTIVE)
 		self.displaySampleSelected.set(self.sampleSelected)
 		print(f'You selected {self.sampleSelected}')
