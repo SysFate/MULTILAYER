@@ -171,13 +171,12 @@ class StartGUI(tk.Tk):
 		sample.raw.index = sample.raw.index.str.upper()
 		if runObject.mode == 'explore':
 			dic_gexel_raw = dict(sample.raw.apply(lambda x : self.createGexel(x, listGexelCountRaw, runObject), axis=0))
-			print(len(dic_gexel_raw.keys()))
 			sample.maxCountRaw =  max(listGexelCountRaw)
 			sample.minCountRaw =  min(listGexelCountRaw)
 			dic_geneSample_raw = dict(sample.raw.apply(self.createGeneSample, axis=1))
 			runObject.dicSample[sample.name].dicGexelRaw = dic_gexel_raw
 			runObject.dicSample[sample.name].dicSampleRaw = dic_geneSample_raw
-		print(f'Normalisation {sampleData}')
+		#print(f'Normalisation {sampleData}')
 		listGexelCountNorm = []
 		if runObject.mode == 'cluster':
 			self.normalization(sampleData, sample, runObject, dirNamePath)
@@ -205,13 +204,14 @@ class StartGUI(tk.Tk):
 			runObject.dicSample[sample.name].dicGexelNorm = dic_gexelNorm
 			sample.maxCountNorm =  max(listGexelCountNorm)
 			sample.minCountNorm =  min(listGexelCountNorm)
-		print(f'Diff gene {sampleData}')
+		#print(f'Diff gene {sampleData}')
 		self.diffgene(sample, runObject, dirNamePath)
 		runObject.dicSample[sample.name].listGexelDiff	= list(runObject.dicSample[sample.name].diff.columns.values)
 		dic_geneSampleDiff = dict(runObject.dicSample[sample.name].diff.apply(self.createGeneSample, axis=1))
 		runObject.dicSample[sample.name].dicSampleDiff = dic_geneSampleDiff
-		print(f'Patterns detection {sampleData}')
+		#print(f'Patterns detection {sampleData}')
 		self.agglomerative(dic_geneSampleDiff, sample, runObject,  runObject.minPattern)
+		print(f'### - Similarity Matrix {sample.name}')
 		self.generateMatrixSimilarity(dic_geneSampleDiff, runObject, dirNamePath, sample.name)
 
 	def clusterMatrix(self, runObject):
@@ -279,6 +279,7 @@ class StartGUI(tk.Tk):
 		"""
 		Agglomerative clustering for define contigous pattern
 		"""
+		print(f'### - Patterns detection {sample.name}')
 		sample.infoPattern = []
 		for geneSample in dicGeneSample.keys():
 			tempListCoordinate = []
@@ -310,7 +311,6 @@ class StartGUI(tk.Tk):
 		"""
 		Compare all patterns and generate a similarity matrix
 		"""
-		print('Similarity Matrix')
 		startTime_sim = time.time()
 		list_similarity = []
 		list_column = []
@@ -3489,7 +3489,7 @@ class matrixGUI(object):
 def main():
 	run = Run()
 	runGUI = StartGUI(run)
-	runGUI.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
+	#runGUI.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
 	runGUI.mainloop()
 	if run.indexRun == 1:
 		root = tk.Tk()
@@ -3515,7 +3515,7 @@ def main():
 						run.sizeY = run.calculatedY
 					run.totalGexel = run.sizeX * run.sizeY
 		app = mainGUI(root, run) 
-		root.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
+		#root.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
 		root.mainloop()
 
 if __name__ == "__main__":
