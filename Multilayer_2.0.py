@@ -1491,6 +1491,9 @@ class mainGUI(object):
 		self.communitiesButton.config(state = 'normal')
 
 	def communitiesArgs(self, master):
+		"""
+		Communities arguments panel
+		"""
 		self.frameArg = tk.Frame(master)
 		self.frameWeight = tk.Frame(self.frameArg)
 		self.labelArg = tk.Label(self.frameWeight, text='Arguments for communities')
@@ -1526,6 +1529,9 @@ class mainGUI(object):
 		self.runcommunitiesButton.pack()
 
 	def louvain(self, dfLouvain, weightIndex, randomIndex, frame):
+		"""
+		Perform communities detection with Louvain algorithm
+		"""
 		dic_valCount_df = {}
 		dic_valCount_index = {}
 		indexRandom = 1
@@ -1564,6 +1570,9 @@ class mainGUI(object):
 				self.runObject.dicSample[self.nameSample].dicSampleDiff, 0, 0, 'communitiesGradient', self.countDisplayStringDiff, self.nameSample, self.runObject.dicSample[self.nameSample].currentLouvain)
 
 	def logFileRandomCommunities(self, tupleSort, total):
+		"""
+		Results of Louvain communities detection
+		"""
 		print('##########\n#  LOG   #\n##########')
 		for i in range(len(tupleSort)):
 			if i == 0:
@@ -1650,6 +1659,9 @@ class mainGUI(object):
 		return(sorted(list_GO_Bank_temp))
 
 class resultGOClass(object):
+	"""
+	datasets communities heatmap for batch mode
+	"""
 	def __init__(self, master, runObject, df, dic):
 		self.master = master
 		self.runObject = runObject
@@ -2026,7 +2038,6 @@ class wrapperClass(object):
 				df_class['TG'] = df_class.apply(self.mergeTG, axis=1)#"{}{}".format(x, 'str'))
 				df_class['TF'] = df_class.apply(lambda x : self.mergeTF(x, name), axis=1)
 				list_.append(df_class)
-
 			else:
 				print(f'Agglomerative - {int(self.dicClass[name])}')
 				dic_geneSampleDiffCopy = copy.deepcopy(self.runObject.dicSample[name].dicSampleDiff)
@@ -2081,7 +2092,6 @@ class wrapperClass(object):
 											index_find += 1
 										else:
 											list_temp.append(np.NaN)
-									#TODO
 									elif self.runObject.method == 'Dice':
 										inter = len(set_gene_query.intersection(set(dic_geneSampleDiffCopy[geneComp].dic_pattern[int(numberPatternComp)])))
 										union = len(set_gene_query.union(set(dic_geneSampleDiffCopy[geneComp].dic_pattern[int(numberPatternComp)])))
@@ -2367,6 +2377,9 @@ class wrapperClass(object):
 
 
 class matrixGUI(object):
+	"""
+	Panel allows user choose which matrix to display
+	"""
 	def __init__(self, title, master, runObject, countDisplayStringCoor, countDisplayString, nameSample, dicGexel, dicGeneSample, maxCountGexel, minCountGexel, gradient, listGOBank, currentLouvain):
 		self.master = master
 		self.runObject = runObject
@@ -2742,6 +2755,9 @@ class matrixGUI(object):
 		return list_color_hex
 
 	def colors(self):
+		"""
+		Colors for similarity patterns 
+		"""
 		self.colorScale.delete('all')
 		list_color_hex = [self.rgb(0, 0, 255), self.rgb(75, 0, 230), self.rgb(244, 114, 208), self.rgb(0, 191, 255), self.rgb(50, 205, 50), \
 			self.rgb(96, 169, 23), self.rgb(255, 255, 0), self.rgb(240, 163, 10), self.rgb(250, 104, 0), \
@@ -2770,6 +2786,9 @@ class matrixGUI(object):
 		self.master.destroy()
 
 	def similarity(self):
+		"""
+		Co-Expression Pattern analysis matrix
+		"""
 		if self.patternDisplayString.get() == '':
 			tk.messagebox.showwarning('No pattern selected !', 'You have to select a pattern before performing a similarity analysis.', icon='warning')
 		else:
@@ -2872,6 +2891,9 @@ class matrixGUI(object):
 			self.scatterFrame.maxsize(500, 380)
 
 	def displayScatter(self, master, df):
+		"""
+		Co-Expression Pattern analysis table
+		"""
 		listCol = [i for i in df.index]
 		self.frameScatterWindow = tk.Frame(master)
 		self.listBoxScatterResult = ttk.Treeview(self.frameScatterWindow, columns=listCol,
