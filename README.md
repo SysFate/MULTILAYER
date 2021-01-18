@@ -81,12 +81,6 @@ pip install networkx
 pip install python-louvain
 ```
 
-###### - Louvain
-
-```bash
-pip install python-louvain
-```
-
 ###### - Python Imaging Library / PIL
 
 ```bash
