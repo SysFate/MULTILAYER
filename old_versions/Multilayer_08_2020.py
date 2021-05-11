@@ -26,11 +26,6 @@ import networkx as nx
 import community as louvain
 import webbrowser
 import copy
-import PIL
-from PIL import ImageTk
-from PIL import Image
-from PIL import ImageDraw
-import sys
 
 class GeneSample(object):
 	"""
@@ -40,8 +35,6 @@ class GeneSample(object):
 		totalCount : 				The sum of counts for all coordinates
 		maxCount : 					Highest counts
 		minCount : 					Lower counts
-			##numberUp :				Number of gexel where this gene is up regulated
-			##numberDown : 				Number of gexel where this gene is down regulated
 		dic_coordinate_count :		Dictionnary[coordinate ID] = count. This dic has as key the name of coordinate and as value the count for this coordinate.
 		dic_pattern :				Dictionnary[index pattern] = [coordinates]. This dic has as key a number (pattern index) and as value the list of coordinates.
 	"""
@@ -85,11 +78,10 @@ class Run(object):
 		self.numberCPU = None
 		self.indexRun = None
 		self.minPattern = None
+		self.indexImport = None
 		self.saveMatrix = None
 		self.upDiffThreshold = 1
 		self.downDiffThreshold = -1
-		self.calculatedX = 0
-		self.calculatedY = 0
 
 class Sample(object):
 	"""
@@ -129,7 +121,7 @@ class StartGUI(tk.Tk):
 		self.container = tk.Frame(self)
 		self.container.pack(expand=1)
 		self.dic_frames = {}
-		for frame_name in [StartPageGUI, InputGUIExplore, InputGUIBatch, ParamGUI]:
+		for frame_name in [StartPageGUI, InputGUI, ParamGUI]:
 			page_name = frame_name.__name__
 			frame = frame_name(self.container, self, runObject)
 			self.dic_frames[frame_name.__name__] = frame
@@ -137,28 +129,24 @@ class StartGUI(tk.Tk):
 		self.show_frame("StartPageGUI", runObject)
 
 	def show_frame(self, page_name, runObject):
-		"""
-		Function for switch panel
-		"""
 		frame = self.dic_frames[page_name]
 		frame.tkraise()
 
+	def filterMatrix(self):
+		"""
+		filter rows and column, avoid 0 in each rows / column
+		"""
+		pass
+
 	def roundVal(self, x):
-		"""
-		Round values
-		"""
 		new = x.split('x')
 		return(f'{round(float(new[0]))}x{round(float(new[1]))}')
 
-	def create_matrix(self, sampleData, runObject):
-		"""
-		Prepare raw, norm, diff. genes and patterns
-		"""
+	def creat_matrices(self, sampleData, runObject):
 		sample = Sample(os.path.basename(sampleData))
 		dirNamePath = os.path.join(os.path.dirname(os.path.abspath(runObject.raw[0])), 'Similarity_Matrix_Sample')
 		if not os.path.exists(dirNamePath):
 			os.mkdir(dirNamePath)
-		runObject.dicSample[sample.name] = sample
 		if runObject.transpose == True:
 			sample.raw = pd.read_csv(sampleData, sep='\t', index_col=[0]).astype(float).transpose()
 		else:
@@ -167,81 +155,58 @@ class StartGUI(tk.Tk):
 			sample.raw.columns = sample.raw.columns.to_series().apply(self.roundVal)
 		dic_gexel_raw = {}
 		listGexelCountRaw = []
+		runObject.dicSample[sample.name] = sample
 		sample.raw = sample.raw.loc[(sample.raw.sum(axis=1) != 0), (sample.raw.sum(axis=0) != 0)]
 		sample.raw.index = sample.raw.index.str.upper()
 		if runObject.mode == 'explore':
-			dic_gexel_raw = dict(sample.raw.apply(lambda x : self.createGexel(x, listGexelCountRaw, runObject), axis=0))
+			dic_gexel_raw = dict(sample.raw.apply(lambda x : self.createGexel(x, listGexelCountRaw), axis=0))
+			print(len(dic_gexel_raw.keys()))
 			sample.maxCountRaw =  max(listGexelCountRaw)
 			sample.minCountRaw =  min(listGexelCountRaw)
 			dic_geneSample_raw = dict(sample.raw.apply(self.createGeneSample, axis=1))
 			runObject.dicSample[sample.name].dicGexelRaw = dic_gexel_raw
 			runObject.dicSample[sample.name].dicSampleRaw = dic_geneSample_raw
-		#print(f'Normalisation {sampleData}')
+		print(f'Normalisation {sampleData}')
 		listGexelCountNorm = []
-		if runObject.mode == 'cluster':
-			self.normalization(sampleData, sample, runObject, dirNamePath)
-		else:
-			if runObject.norm == [''] and runObject.diff == ['']:
-				self.normalization(sampleData, sample, runObject, dirNamePath)
-			elif runObject.norm != ['']:
-				print(f'### - Loading Normalisation file - {sample.name}')
-				if runObject.transpose == True:
-					sample.norm = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float).transpose()
-					sample.norm.index = sample.norm.index.str.upper()
-					if runObject.diff == ['']:
-						sample.diff = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float).transpose()
-						sample.diff += 1
-				else:
-					sample.norm = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float)
-					sample.norm.index = sample.norm.index.str.upper()
-					if runObject.diff == ['']:
-						sample.diff = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float)
-						sample.diff += 1
-		if runObject.mode == 'explore' and runObject.norm != ['']:
+		self.normalization(sampleData, sample, runObject, dirNamePath)
+		
+		if runObject.mode == 'explore':
 			dic_geneSampleNorm = dict(runObject.dicSample[sample.name].norm.apply(self.createGeneSample, axis=1))
 			runObject.dicSample[sample.name].dicSampleNorm = dic_geneSampleNorm
-			dic_gexelNorm = dict(runObject.dicSample[sample.name].norm.apply(lambda x : self.createGexel(x, listGexelCountNorm, runObject), axis=0))
+			dic_gexelNorm = dict(runObject.dicSample[sample.name].norm.apply(lambda x : self.createGexel(x, listGexelCountNorm), axis=0))
 			runObject.dicSample[sample.name].dicGexelNorm = dic_gexelNorm
 			sample.maxCountNorm =  max(listGexelCountNorm)
 			sample.minCountNorm =  min(listGexelCountNorm)
-		#print(f'Diff gene {sampleData}')
+		print(f'Diff gene {sampleData}')
 		self.diffgene(sample, runObject, dirNamePath)
 		runObject.dicSample[sample.name].listGexelDiff	= list(runObject.dicSample[sample.name].diff.columns.values)
 		dic_geneSampleDiff = dict(runObject.dicSample[sample.name].diff.apply(self.createGeneSample, axis=1))
 		runObject.dicSample[sample.name].dicSampleDiff = dic_geneSampleDiff
-		#print(f'Patterns detection {sampleData}')
+		print(f'Patterns detection {sampleData}')
 		self.agglomerative(dic_geneSampleDiff, sample, runObject,  runObject.minPattern)
-		print(f'### - Similarity Matrix {sample.name}')
 		self.generateMatrixSimilarity(dic_geneSampleDiff, runObject, dirNamePath, sample.name)
 
+	#TODO REWORK
 	def clusterMatrix(self, runObject):
 		startTime = time.time()
-		to_process = []
-		listThread = []
-		index = 0
-		indexStr = ''
-		if index <= len(runObject.raw):
-			index = len(runObject.raw)
-			indexStr = 'raw'
-		elif index <= len(runObject.norm):
-			index = len(runObject.norm)
-			indexStr = 'norm'
-		elif index <= len(runObject.diff):
-			index = len(runObject.diff)
-			indexStr = 'diff'
-		while len(to_process) < index:
-			if threading.active_count() <= runObject.numberCPU:
-				file = runObject.raw[len(to_process)]
-				newThread = threading.Thread(target=self.create_matrix, args=[file, runObject])
-				newThread.start()
-				listThread.append(newThread)
-				to_process.append(file)
-			else:
-				time.sleep(0.01)
-			for thread in listThread:
-				thread.join()
+		if len(runObject.diff) == 0:
+			if len(runObject.norm) == 0:
+				to_process = []
+				listThread = []
+				while len(to_process) < len(runObject.raw):
+					if threading.active_count() <= runObject.numberCPU:
+						print(f'Nombre de thread actifs: {threading.active_count()}')
+						file = runObject.raw[len(to_process)]
+						newThread = threading.Thread(target=self.creat_matrices, args=[file, runObject])
+						newThread.start()
+						listThread.append(newThread)
+						to_process.append(file)
+					else:
+						time.sleep(0.01)
+				for thread in listThread:
+					thread.join()
 		stopTime = time.time()
-		print(f'Time {stopTime-startTime} seconds')
+		print(f'Time {stopTime-startTime} secondes')
 		runObject.indexRun = 1
 		self.destroy()
 
@@ -249,26 +214,16 @@ class StartGUI(tk.Tk):
 		runObject = run_Object
 		self.destroy()
 
-	def createGexel(self, x, listGexelCount, run):
-		"""
-		Create Gexel object (column from matrix)
-		"""
+	def createGexel(self, x, listGexelCount):
 		sumCount = sum(x)
 		if sumCount != 0:
 			gexel = Gexel(x.name)
-			if int(x.name.split('x')[0]) > run.calculatedX:
-				run.calculatedX = int(x.name.split('x')[0])
-			if int(x.name.split('x')[1]) > run.calculatedY:
-				run.calculatedY = int(x.name.split('x')[1])
 			gexel.totalGeneCount = sumCount
 			gexel.genesValueGexel = x.to_dict()
 			listGexelCount.append(sumCount)
 			return gexel
 
 	def createGeneSample(self, x):
-		"""
-		Create GeneSample object (row from matrix)
-		"""
 		geneSample = GeneSample(x.name.upper())
 		geneSample.maxCount = max(x)
 		geneSample.minCount = min(x)
@@ -276,10 +231,6 @@ class StartGUI(tk.Tk):
 		return geneSample
 
 	def agglomerative(self, dicGeneSample, sample, runObject, indexMinPattern):
-		"""
-		Agglomerative clustering for define contigous pattern
-		"""
-		print(f'### - Patterns detection {sample.name}')
 		sample.infoPattern = []
 		for geneSample in dicGeneSample.keys():
 			tempListCoordinate = []
@@ -306,11 +257,9 @@ class StartGUI(tk.Tk):
 							listTemp.append(f'{o[0]}x{o[1]}')
 						dicGeneSample[geneSample].dic_pattern[indexFind] = listTemp
 						sample.infoPattern.append((len(listTemp), dicGeneSample[geneSample].geneID))
-	
+
 	def generateMatrixSimilarity(self, dicGeneSample, runObject, pathDirSave, name):
-		"""
-		Compare all patterns and generate a similarity matrix
-		"""
+		print('Similarity Matrix')
 		startTime_sim = time.time()
 		list_similarity = []
 		list_column = []
@@ -358,15 +307,12 @@ class StartGUI(tk.Tk):
 		dfSim = pd.DataFrame(list_similarity, columns=list_column, index=list_column)
 		dfSim = dfSim.transpose()
 		runObject.dicSample[name].simMatrix = dfSim.copy()
-		dfSim.to_csv(os.path.join(pathDirSave, f'{name}_size{runObject.minPattern}_{runObject.method}_similarity_matrix.tsv'), sep='\t')
+		dfSim.to_csv(os.path.join(pathDirSave, f'{name}_0_size{runObject.minPattern}_{runObject.method}_similarity_matrix.tsv'), sep='\t')
 		stopTime_sime = time.time()
-		print(f'Time to make similarity  {stopTime_sime-startTime_sim} seconds')
+		print(f'Time to make similarity  {stopTime_sime-startTime_sim} secondes')
 		StartGUI.matrixForLouvain(StartGUI, runObject.dicSample[name])
 
 	def matrixForLouvain(self, sample):
-		"""
-		Create file for Louvain analysis
-		"""
 		dico_tot ={}
 		sample.simMatrix.apply(lambda x: StartGUI.dico_df(StartGUI, x, dico_tot))
 		dico_fin = StartGUI.dico_final(StartGUI, dico_tot)
@@ -384,9 +330,6 @@ class StartGUI(tk.Tk):
 		return dico_final
 
 	def normalization(self, data, sample, runObject, dirNamePath):
-		"""
-		Quantile normalization
-		"""
 		print(f'### - Normalisation - {sample.name}')
 		if runObject.transpose == True:
 			df = pd.read_csv(data, sep='\t', index_col=[0]).astype(float).transpose()
@@ -404,41 +347,104 @@ class StartGUI(tk.Tk):
 		sample.diff = dfDiff
 		sample.norm.index = sample.norm.index.str.upper()
 		runObject.norm.append(sample.norm)
-		if runObject.saveMatrix == True:
+		if runObject.saveMatrix == 1:
 			print('SAVE NORM MATRIX')
-			print(os.path.join(dirNamePath, f'{sample.name}_size{runObject.minPattern}_{runObject.method}_Norm.tsv'))
-			sample.norm.to_csv(os.path.join(dirNamePath, f'{sample.name}_size{runObject.minPattern}_{runObject.method}_Norm.tsv'), sep='\t')
-
+			sample.norm.to_csv(os.path.join(dirNamePath, f'{sample.name}_0_size{runObject.minPattern}_{runObject.method}_Norm.tsv'), sep='\t')
+		
 	def diffgene(self, sample, runObject, dirNamePath):
-		"""
-		Differentially expressed genes
-		"""
 		print(f'### - Differentially expression - {sample.name}')
-		if runObject.diff == [''] or runObject.mode == 'cluster':
-			sample.diff['mean'] = sample.diff.mean(axis=1)
-			sample.diff = sample.diff.drop(['mean'], axis=1).apply(lambda x: np.log2(x/sample.diff['mean']))
-		else:
-			print(f'### - Loading Differentially expression file - {sample.name}')
-			if runObject.transpose == True:
-				sample.diff = pd.read_csv(runObject.diff[0], sep='\t', index_col=[0]).astype(float).transpose()
-			else:
-				sample.diff = pd.read_csv(runObject.diff[0], sep='\t', index_col=[0]).astype(float)
-		df = sample.diff.copy()
 		sample.diff.index = sample.diff.index.str.upper()
+		sample.diff['mean'] = sample.diff.mean(axis=1)
+		sample.diff = sample.diff.drop(['mean'], axis=1).apply(lambda x: np.log2(x/sample.diff['mean']))
+		
+		df = sample.diff.copy()
 		df['positive'] = df[df >= runObject.upDiffThreshold].count(axis=1).values
 		df['negative'] = df[df <= runObject.downDiffThreshold].count(axis=1).values
 		runObject.dicSample[sample.name].infoUp = list(zip(df['positive'].values.tolist(), df.index.values.tolist()))
 		runObject.dicSample[sample.name].infoDown = list(zip(df['negative'].values.tolist(), df.index.values.tolist()))
 		df.drop(['positive'], axis=1)
 		df.drop(['negative'], axis=1)
-		if runObject.saveMatrix == True:
+		if runObject.saveMatrix == 1:
 			print('SAVE DIFF MATRIX')
-			sample.diff.to_csv(os.path.join(dirNamePath, f'{sample.name}_size{runObject.minPattern}_{runObject.method}_Diff.tsv'), sep='\t')
+			sample.diff.to_csv(os.path.join(dirNamePath, f'{sample.name}_0_size{runObject.minPattern}_{runObject.method}_Diff.tsv'), sep='\t')
 		runObject.diff.append(sample.diff)
+
+class StartPage(tk.Frame):
+	"""
+	First page
+	"""
+	def __init__(self, parent, controller, runObject):
+		tk.Frame.__init__(self, parent)
+		self.controller = controller
+		self.runObject = runObject
+		self.onlyDigit = (self.register(self._validate))
+		self.label = tk.Label(self, text="This is Start Page")
+		self.label.pack(side="top", fill="x", pady=10)
+		self.Importbutton = ttk.Button(self, text="Import", command= lambda : self._load())
+		self.Importbutton.pack()
+		self.button = ttk.Button(self, text="Cluster", command=lambda: self._next('cluster'))
+		self.button.pack()
+		self.button1 = ttk.Button(self, text="Explore", command=lambda: self._next('explore'))
+		self.button1.pack()
+		self.frameX = tk.Frame(self)
+		self.labelX = tk.Label(self.frameX, text="X :")
+		self.labelX.pack(side=LEFT)
+		self.sizeXVar = IntVar()
+		self.sizeX = Entry(self.frameX, textvar=self.sizeXVar, width=3, validate='all', validatecommand=(self.onlyDigit, '%P'))
+		self.sizeXVar.set(32)
+		self.sizeX.pack(side=RIGHT)
+		self.frameX.pack()
+		self.frameY = tk.Frame(self)
+		self.labelY = tk.Label(self.frameY, text="Y :")
+		self.labelY.pack(side=LEFT)
+		self.sizeYVar = IntVar()
+		self.sizeY = Entry(self.frameY, textvar=self.sizeYVar, width=3, validate='all', validatecommand=(self.onlyDigit, '%P'))
+		self.sizeYVar.set(32)
+		self.sizeY.pack(side=RIGHT)
+		self.frameY.pack()
+		self.frameSave = tk.Frame(self)
+		self.labelSave = tk.Label(self.frameSave, text="Save matrix (norm, diff) :")
+		self.labelSave.pack(side=LEFT)
+		self.varSave = IntVar()
+		self.saveMatrix = Checkbutton(self.frameSave, variable=self.varSave)
+		self.saveMatrix.deselect()
+		self.saveMatrix.pack(side=RIGHT)
+		self.frameSave.pack()
+		self.labelNumberCPU = tk.Label(self, text=f'Your computer has {multiprocessing.cpu_count()} threads.\nHow many do you want to use ?')
+		self.labelNumberCPU.pack()
+		self.numberCPU = IntVar()
+		self.numberCPU.set(1)
+		self.cpuEntry = Entry(self, textvar=self.numberCPU, width=3, validate='all', validatecommand=(self.onlyDigit, '%P'))
+		self.cpuEntry.pack()
+ 
+	def _load(self):
+		startTime = time.time()
+		fileDir = askopenfilename(multiple=False, filetypes=[('SAVE', '*.save')])
+		self.runObject.indexImport = fileDir
+		self.controller.destroyFrame(self.runObject)
+
+	def _validate(self, P):
+		if str.isdigit(P) or P == '':
+			return True
+		else:
+			return False
+
+	def _next(self, mode):
+		self.runObject.mode = mode
+		self.runObject.sizeX = self.sizeXVar.get()
+		self.runObject.sizeY = self.sizeYVar.get()
+		self.runObject.numberCPU = self.numberCPU.get()
+		self.runObject.saveMatrix = self.varSave.get()
+		print(self.runObject.saveMatrix)
+		print(self.runObject.numberCPU)
+		self.runObject.totalGexel = self.runObject.sizeX * self.runObject.sizeY
+		print(self.runObject.mode)
+		self.controller.show_frame("InputGUI", self.runObject)
+
 
 class StartPageGUI(tk.Frame):
 	"""
-	Home page
+	First page
 	"""
 	def __init__(self, parent, controller, runObject):
 		tk.Frame.__init__(self, parent)
@@ -451,11 +457,11 @@ class StartPageGUI(tk.Frame):
 		self.canvasLogo.bind("<Button-1>", lambda event : webbrowser.open_new("https://www.sysfate.org/"))
 		self.canvasLogo.bind("<Enter>",  lambda event : self.canvasLogo.config(cursor="hand2"))
 		self.canvasLogo.bind("<Leave>", lambda event : self.canvasLogo.config(cursor=""))
-		self.labelExplore = tk.Label(self, text="Explore one dataset :", font= "Arial 14")#, font=controller.title_font)
+		self.labelExplore = tk.Label(self, text="Explore one dataset :", font= "Arial 14")
 		self.labelExplore.grid(row=2, column=1, sticky=NW, pady=30)
 		self.buttonExplore = ttk.Button(self, width=20, text="Explore Mode", command=lambda: self._next('explore'))
 		self.buttonExplore.grid(row=2, column=2, sticky=NW, pady=30)
-		self.labelBatch = tk.Label(self, text="Explore multiple datasets :", font= "Arial 14")#, font=controller.title_font)
+		self.labelBatch = tk.Label(self, text="Explore multiple datasets :", font= "Arial 14")
 		self.labelBatch.grid(row=3, column=1, sticky=NW)
 		self.buttonBatch = ttk.Button(self, width=20, text="Batch Mode", command=lambda: self._next('cluster'))
 		self.buttonBatch.grid(row=3, column=2, sticky=NW)
@@ -475,36 +481,75 @@ class StartPageGUI(tk.Frame):
 
 	def _next(self, mode):
 		self.runObject.mode = mode
-		if mode == 'explore':
-			self.controller.show_frame("InputGUIExplore", self.runObject)
-			print('explore')
-		elif mode == 'cluster':
-			self.controller.show_frame("InputGUIBatch", self.runObject)
-			print('cluster')
+		self.controller.show_frame("InputGUI", self.runObject)
 
-class InputGUIBatch(tk.Frame):
+class InputPageGUI(tk.Frame):
 	"""
-	Input Batch
+	Input page
 	"""
 	def __init__(self, parent, controller, runObject):
 		tk.Frame.__init__(self, parent)
 		self.controller = controller
 		self.runObject = runObject
+		self.varRawString = StringVar()
+		self.varNormString = StringVar()
+		self.varDiffString = StringVar()
 		self.onlyDigit = (self.register(self._validate))
-		self.labelInput = tk.Label(self, text='Select dataset(s) :', font= "Arial 14")
-		self.labelInput.pack(side=TOP)
-		self.frameInputFile = tk.Frame(self)
+		self.frameMaster = tk.Frame(self)
+		self.labelInput = tk.Label(self.frameMaster, text='Select input matrix :', font= "Arial 12")
+		self.labelInput.grid(row=0, columnspan=1, sticky="w")
 		self.listRawFile = []
-		self.frameMasterRaw = tk.Frame(self)
-		self.frameRaw = tk.Frame(self.frameMasterRaw)
+		self.varRawString.set('Matrix : ')
+		self.frameRaw = tk.Frame(self.frameMaster)
 		self.varRaw = IntVar()
+		self.checkRaw = Checkbutton(self.frameRaw, width=2, variable=self.varRaw, command=lambda: print(f'1 = {self.varRaw.get()}'))
+		self.checkRaw.select()
+		self.checkRaw.grid(row=1, column=0)
 		self.namePathRaw = StringVar()
-		self.rawBut = ttk.Button(self.frameRaw, text='Raw Matrix',  width = 20, command=lambda: self.browse_button(self.namePathRaw, 'raw'))
+		self.rawBut = ttk.Button(self.frameRaw, text='Raw',  width = 16, command=lambda: self._browse_button(self.varRawString, self.namePathRaw, self.runObject.raw))
 		self.rawBut.grid(row=1, column=1)
+		self.varRaw.trace('w', lambda name, index, mode, button= self.rawBut, var=self.varRaw : self._clickCheckButton(name, index, mode, button, var))
 		self.frameRaw.grid(row=1, column=0, sticky="w")
-		self.frameMasterRaw.pack(pady=5)
-		self.frameInformation = tk.Frame(self)
-		self.labelInformation = tk.Label(self.frameInformation, text='Matrix Informations :', font= "Arial 14")
+		self.frameRawLabel = tk.Frame(self.frameMaster)
+		self.labelRawFile = tk.Label(self.frameRawLabel, textvariable=self.varRawString)
+		self.labelRawFile.grid(row=0, columnspan=1, sticky="w")
+		self.frameRawLabel.grid(row=2, columnspan=1, sticky="w")
+		self.listNormFile = []
+		self.varNormString.set('Matrix : ')
+		self.frameNorm = tk.Frame(self.frameMaster)
+		self.varNorm = IntVar()
+		self.checkNorm = Checkbutton(self.frameNorm, width=2, variable=self.varNorm, command=lambda: print(f'2 = {self.varNorm.get()}'))
+		self.checkNorm.deselect()
+		self.checkNorm.grid(row=1, column=0)
+		self.namePathNorm = StringVar()
+		self.normBut = ttk.Button(self.frameNorm, text='Normalized', width = 16, command=lambda: self._browse_button(self.varNormString, self.namePathNorm, self.runObject.norm))
+		self.normBut.config(state = "disabled")
+		self.normBut.grid(row=1, column=1)
+		self.varNorm.trace('w', lambda name, index, mode, button= self.normBut, var=self.varNorm : self._clickCheckButton(name, index, mode, button, var))
+		self.frameNorm.grid(row=3, column=0, sticky="w")
+		self.frameNormLabel = tk.Frame(self.frameMaster)
+		self.labelNorm = tk.Label(self.frameNormLabel, textvariable=self.varNormString)
+		self.labelNorm.grid(row=0, column=0, sticky="w")
+		self.frameNormLabel.grid(row=4, columnspan=1, sticky="w")
+		self.listDiffFile = []
+		self.varDiffString.set('Matrix : ')
+		self.frameDiff = tk.Frame(self.frameMaster)
+		self.varDiff = IntVar()
+		self.checkDiff = Checkbutton(self.frameDiff, width=2, variable=self.varDiff, command=lambda: print(f'3 = {self.varDiff.get()}'))
+		self.checkDiff.deselect()
+		self.checkDiff.grid(row=1, column=0)
+		self.namePathDiff = StringVar()
+		self.diffBut = ttk.Button(self.frameDiff, text='Differential expressed', width = 16, command=lambda: self._browse_button(self.varDiffString, self.namePathDiff, self.runObject.diff))
+		self.diffBut.config(state = "disabled")
+		self.diffBut.grid(row=1, column=1)
+		self.varDiff.trace('w', lambda name, index, mode, button= self.diffBut, var=self.varDiff : self._clickCheckButton(name, index, mode, button, var))
+		self.frameDiff.grid(row=5, column=0, sticky="w")
+		self.frameDiffLabel = tk.Frame(self.frameMaster)
+		self.labelDiff = tk.Label(self.frameDiffLabel, textvariable=self.varDiffString)
+		self.labelDiff.grid(row=0, column=0, sticky="w")
+		self.frameDiffLabel.grid(row=6, columnspan=1, sticky="w")
+		self.frameInformation = tk.Frame(self.frameMaster)
+		self.labelInformation = tk.Label(self.frameInformation, text='Matrix Informations :', font= "Arial 12")
 		self.labelInformation.grid(row=0, columnspan=3)
 		self.varTranspose = IntVar()
 		self.checkTranspose = Checkbutton(self.frameInformation, width=2, variable=self.varTranspose)
@@ -518,8 +563,8 @@ class InputGUIBatch(tk.Frame):
 		self.checkRound.grid(row=2, column=0, sticky="w")
 		self.labelRound = tk.Label(self.frameInformation, text=': Round matrix')
 		self.labelRound.grid(row=2, column=1, sticky="w")
-		self.frameInformation.pack()
-		self.frameInformationSize = tk.Frame(self)
+		self.frameInformation.grid(row=7, column=0, sticky="w")
+		self.frameInformationSize = tk.Frame(self.frameMaster)
 		self.labelX = tk.Label(self.frameInformationSize, text='Size X of matrix :')
 		self.labelX.grid(row=1, column=0, sticky="w")
 		self.sizeXVar = IntVar()
@@ -527,18 +572,19 @@ class InputGUIBatch(tk.Frame):
 		self.sizeXVar.set(32)
 		self.sizeX.grid(row=1, column=1, sticky="w")
 		self.labelY = tk.Label(self.frameInformationSize, text='Size Y of matrix:')
-		self.labelY.grid(row=2, column=0, sticky="w")
+		self.labelY.grid(row=1, column=2, sticky="w")
 		self.sizeYVar = IntVar()
 		self.sizeY = Entry(self.frameInformationSize, textvar=self.sizeYVar, width=3, validate='all', validatecommand=(self.onlyDigit, '%P'))
 		self.sizeYVar.set(32)
-		self.sizeY.grid(row=2, column=1, sticky="w")
-		self.frameInformationSize.pack()
-		self.frameBackNext = Frame(self)
-		self.buttonBack = ttk.Button(self.frameBackNext, width=25, text="Back", command=lambda: controller.show_frame('StartPageGUI', self.runObject))
-		self.buttonBack.pack(side=LEFT, fill=X)
-		self.buttonNext = ttk.Button(self.frameBackNext, width=25, text="Next", command=lambda: self._next())
-		self.buttonNext.pack(side=RIGHT, fill=X)
-		self.frameBackNext.pack(side=BOTTOM, fill=X)
+		self.sizeY.grid(row=1, column=3, sticky="w")
+		self.frameInformationSize.grid(row=8, column=0, sticky="w")
+		self.frameBackNext = Frame(self.frameMaster)
+		self.buttonBack = ttk.Button(self.frameBackNext, text="Back", width = 7, command=lambda: controller.show_frame('StartPageGUI', self.runObject))
+		self.buttonBack.grid(row=0, column=0, sticky="w")
+		self.buttonNext = ttk.Button(self.frameBackNext, text="Next", width = 7, command=lambda: self._next())
+		self.buttonNext.grid(row=0, column=1, sticky="e")
+		self.frameBackNext.grid(row=9, column=0, sticky="w")
+		self.frameMaster.grid(row=0, column=0, sticky="n")
 
 	def _validate(self, P):
 		if str.isdigit(P) or P == '':
@@ -546,39 +592,92 @@ class InputGUIBatch(tk.Frame):
 		else:
 			return False
 
-	def browse_button(self, namePath, typeOfMatrix):
+	def _next(self):
+		if len(self.listRawFile)+len(self.listNormFile)+len(self.listDiffFile) == 0:
+			tk.messagebox.showwarning('No file(s) selected !', 'You have to select at least one matrix.', icon='warning')
+		else:
+			if self.varRaw.get() != 0:
+				self.runObject.raw = self.listRawFile
+			else:
+				self.runObject.raw = []
+
+			if self.varNorm.get() != 0:
+				self.runObject.norm = self.listNormFile
+			else:
+				self.runObject.norm = []
+
+			if self.varDiff.get() != 0:
+				self.runObject.diff = self.listDiffFile
+			else:
+				self.runObject.diff = []
+			if self.varTranspose.get() != 0:
+				self.runObject.transpose = True
+			else:
+				self.runObject.transpose = False
+			if self.varRound.get() != 0:
+				self.runObject.round = True
+			else:
+				self.runObject.round = False
+			self.runObject.sizeX = self.sizeXVar.get()
+			self.runObject.sizeY = self.sizeYVar.get()
+			self.runObject.totalGexel = self.runObject.sizeX * self.runObject.sizeY
+			print(self.runObject.totalGexel)
+			self.controller.show_frame('ParamGUI', self.runObject)
+
+	def _browse_button(self, strNameFile, namePath, listFile):
 		listFile = []
 		if self.runObject.mode == 'cluster':
 			self.fileDir = askdirectory()
 			namePath.set(self.fileDir)
+			strNameFile.set(f'Folder : {os.path.basename(self.fileDir)}')
 			if self.fileDir != '':
 				for file in os.listdir(self.fileDir):
 					fileName, fileExtension = os.path.splitext(file)
 					if fileExtension == '.tsv' or fileExtension == '.csv':
 						listFile.append(os.path.join(self.fileDir, file))
-		self.runObject.raw = listFile
-
-	def _next(self):
-		if self.runObject.raw[0] == '':
-			tk.messagebox.showwarning('No raw file(s) selected !', 'You have to select at least one raw matrix.', icon='warning')
 		else:
-			try:
-				if self.varTranspose.get() != 0:
-					self.runObject.transpose = True
-				else:
-					self.runObject.transpose = False
-				if self.varRound.get() != 0:
-					self.runObject.round = True
-				else:
-					self.runObject.round = False
-				self.runObject.sizeX = self.sizeXVar.get()
-				self.runObject.sizeY = self.sizeYVar.get()
-				self.runObject.totalGexel = self.runObject.sizeX * self.runObject.sizeY
-				self.controller.show_frame('ParamGUI', self.runObject)
-			except:
-				tk.messagebox.showwarning('Error with Matrix size', 'You have to provide an integer as X and Y values.', icon='warning')
+			self.fileDir = askopenfilename(multiple=False, filetypes=[('Tabulation-separated values', '*.tsv')])#,
+			strNameFile.set(f'File : {os.path.basename(self.fileDir)}')
+			listFile.append(self.fileDir)
+		print(listFile)
+		print(self.listRawFile)
 
-class InputGUIExplore(tk.Frame):
+	def _clickCheckButton(self, name, index, mode, button, var):
+		if self.runObject.mode == 'explore':
+			if var.get() == 0:
+				button.config(state = "disabled")
+			else:
+				button.config(state = "normal")
+		else:
+			if button == self.rawBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.diffBut.config(state = "disabled")
+					self.checkDiff.deselect()
+					self.normBut.config(state= 'disabled')
+					self.checkNorm.deselect()
+			elif button == self.normBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.diffBut.config(state = "disabled")
+					self.checkDiff.deselect()
+					self.rawBut.config(state= 'disabled')
+					self.checkRaw.deselect()
+			elif button == self.diffBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.normBut.config(state = "disabled")
+					self.checkNorm.deselect()
+					self.rawBut.config(state= 'disabled')
+					self.checkRaw.deselect()
+
+class InputGUI(tk.Frame):
 	"""
 	Input page
 	"""
@@ -595,18 +694,17 @@ class InputGUIExplore(tk.Frame):
 		self.frameRaw = tk.Frame(self.frameMasterRaw)
 		self.varRaw = IntVar()
 		self.namePathRaw = StringVar()
-		self.rawBut = ttk.Button(self.frameRaw, text='Raw Matrix',  width = 20, command=lambda: self.browse_button(self.namePathRaw, 'raw'))
+		self.rawBut = ttk.Button(self.frameRaw, text='Raw Matrix',  width = 16, command=lambda: self.browse_button(self.namePathRaw, 'raw'))
 		self.rawBut.grid(row=1, column=1)
-		self.namePathNorm = StringVar()
-		self.normBut = ttk.Button(self.frameRaw, text='Normalized', width = 20, command=lambda: self.browse_button(self.namePathNorm, 'norm'))
-		self.normBut.grid(row=1, column=2)
-		self.namePathDiff = StringVar()
-		self.diffBut = ttk.Button(self.frameRaw, text='Differential Expressed', width = 20, command=lambda: self.browse_button(self.namePathDiff, 'diff'))
-		self.diffBut.grid(row=1, column=3)
-		self.resetBut = ttk.Button(self.frameRaw, text='Reset Selection', width = 20, command=lambda: self.resetSelection())
-		self.resetBut.grid(row=2, column=2)
+		self.varRaw.trace('w', lambda name, index, mode, button= self.rawBut, var=self.varRaw : self._clickCheckButton(name, index, mode, button, var))
 		self.frameRaw.grid(row=1, column=0, sticky="w")
 		self.frameMasterRaw.pack(pady=5)
+		self.listNormFile = []
+		self.varNorm = IntVar()
+		self.namePathNorm = StringVar()
+		self.listDiffFile = []
+		self.varDiff = IntVar()
+		self.namePathDiff = StringVar()
 		self.frameInformation = tk.Frame(self)
 		self.labelInformation = tk.Label(self.frameInformation, text='Matrix Informations :', font= "Arial 14")
 		self.labelInformation.grid(row=0, columnspan=3)
@@ -636,12 +734,6 @@ class InputGUIExplore(tk.Frame):
 		self.sizeY = Entry(self.frameInformationSize, textvar=self.sizeYVar, width=3, validate='all', validatecommand=(self.onlyDigit, '%P'))
 		self.sizeYVar.set(32)
 		self.sizeY.grid(row=2, column=1, sticky="w")
-		self.labelSave = tk.Label(self.frameInformationSize, text="Save matrix (norm, diff) :")
-		self.labelSave.grid(row=3, column=0, sticky="w")
-		self.varSave = IntVar()
-		self.saveMatrix = Checkbutton(self.frameInformationSize, variable=self.varSave)
-		self.saveMatrix.deselect()
-		self.saveMatrix.grid(row=3, column=1, sticky="w")
 		self.frameInformationSize.pack()
 		self.frameBackNext = Frame(self)
 		self.buttonBack = ttk.Button(self.frameBackNext, width=25, text="Back", command=lambda: controller.show_frame('StartPageGUI', self.runObject))
@@ -671,29 +763,58 @@ class InputGUIExplore(tk.Frame):
 			listFile.append(self.fileDir)
 		if typeOfMatrix == 'raw':
 			self.runObject.raw = listFile
+			print(self.runObject.raw)
 		elif typeOfMatrix == 'norm':
 			self.runObject.norm = listFile
-		elif typeOfMatrix == 'diff':		
+			print(self.runObject.norm)
+		elif typeOfMatrix == 'diff':
 			self.runObject.diff = listFile
-		print('\n')
-		print('RAW')
-		print(self.runObject.raw)
-		print('NORM')
-		print(self.runObject.norm)
-		print('DIFF')
-		print(self.runObject.diff)
+			print(self.runObject.diff)
 
-	def resetSelection(self):
-		self.runObject.raw = ['']
-		self.runObject.norm = ['']
-		self.runObject.diff = ['']
-		print('All selected files are reset !')
+	def _clickCheckButton(self, name, index, mode, button, var):
+		if self.runObject.mode == 'explore':
+			if var.get() == 0:
+				button.config(state = "disabled")
+			else:
+				button.config(state = "normal")
+		else:
+			if button == self.rawBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.diffBut.config(state = "disabled")
+					self.checkDiff.deselect()
+					self.normBut.config(state= 'disabled')
+					self.checkNorm.deselect()
+			elif button == self.normBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.diffBut.config(state = "disabled")
+					self.checkDiff.deselect()
+					self.rawBut.config(state= 'disabled')
+					self.checkRaw.deselect()
+			elif button == self.diffBut:
+				if var.get() == 0:
+					button.config(state = "disabled")
+				else:
+					button.config(state = "normal")
+					self.normBut.config(state = "disabled")
+					self.checkNorm.deselect()
+					self.rawBut.config(state= 'disabled')
+					self.checkRaw.deselect()
 
 	def _next(self):
-		if self.runObject.raw[0] == '':
-			tk.messagebox.showwarning('No raw file(s) selected !', 'You have to select at least one raw matrix.', icon='warning')
-		else:
-			try:
+		try:
+			if self.runObject.raw[0] == '' and self.runObject.norm[0] == '' and self.runObject.diff[0] == '':
+				tk.messagebox.showwarning('No file(s) selected !', 'You have to select at least one matrix.', icon='warning')
+			else:		
+				if self.varNorm.get() == 0:
+					self.runObject.norm = []
+				if self.varDiff.get() == 0:
+					self.runObject.diff = []
 				if self.varTranspose.get() != 0:
 					self.runObject.transpose = True
 				else:
@@ -705,13 +826,9 @@ class InputGUIExplore(tk.Frame):
 				self.runObject.sizeX = self.sizeXVar.get()
 				self.runObject.sizeY = self.sizeYVar.get()
 				self.runObject.totalGexel = self.runObject.sizeX * self.runObject.sizeY
-				if self.varSave.get() != 0:
-					self.runObject.saveMatrix = True
-				else:
-					self.runObject.saveMatrix = False
 				self.controller.show_frame('ParamGUI', self.runObject)
-			except:
-				tk.messagebox.showwarning('Error with Matrix size', 'You have to provide an integer as X and Y values.', icon='warning')
+		except:
+			tk.messagebox.showwarning('Error with Matrix size', 'You have to provide an integer as X and Y values.', icon='warning')
 
 class ParamGUI(tk.Frame):
 	"""
@@ -724,10 +841,8 @@ class ParamGUI(tk.Frame):
 		self.onlyDigit = (self.register(self._validate))
 		listThresholdValuesUp = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
 		listThresholdValuesDown = [-0.5, -1, -1.5, -2, -2.5, -3, -3.5, -4]
-
 		self.indexRadio = IntVar()
 		self.indexRadio.set(1)
-
 		self.frameDiff = tk.Frame(self)
 		self.labelDiff = tk.Label(self.frameDiff, text='Arguments for differential gene expression :', font= "Arial 14")
 		self.labelDiff.grid(row=0, columnspan=3)
@@ -744,7 +859,6 @@ class ParamGUI(tk.Frame):
 		self.comboDown.grid(row=2, column=2 , sticky='w')
 		self.comboDown.current(1)
 		self.frameDiff.pack(pady=0.5)
-
 		self.framePattern = tk.Frame(self)
 		self.sizeMinGexelVar = IntVar()
 		self.labelPattern = tk.Label(self.framePattern, text='Patterns detection :', font= "Arial 14")
@@ -755,7 +869,6 @@ class ParamGUI(tk.Frame):
 		self.sizeMinGexelVar.set(10)
 		self.minGexel.grid(row=1, column=1, sticky="w")
 		self.framePattern.pack(pady=0.5)
-
 		self.frameMethods = tk.Frame(self)
 		self.varTanimoto = IntVar()
 		self.varDice = IntVar()
@@ -765,23 +878,19 @@ class ParamGUI(tk.Frame):
 			command = lambda: self.indexRadio.set(1))
 		self.radioTanimoto.select()
 		self.radioTanimoto.grid(row=1, column=0, sticky="e")
-
-		self.labelTanimoto = tk.Label(self.frameMethods, text=' Tanimoto', font= "Arial 10")
+		self.labelTanimoto = tk.Label(self.frameMethods, text=' Tanimoto', font= "Arial 10")#, font=controller.title_font)
 		self.labelTanimoto.grid(row=1, column=1, sticky="w")
-
 		self.radioDice = tk.Radiobutton(self.frameMethods, variable=self.varDice.get(), value='radioButton3',
 			command = lambda: self.indexRadio.set(2))
 		self.radioDice.deselect()
 		self.radioDice.grid(row=2, column=0, sticky="e")
-		self.labelDice = tk.Label(self.frameMethods, text=' Dice', font= "Arial 10")
+		self.labelDice = tk.Label(self.frameMethods, text=' Dice', font= "Arial 10")#, font=controller.title_font)
 		self.labelDice.grid(row=2, column=1, sticky="w")
 		self.frameMethods.pack(pady=0.5)
-
 		self.frameCPU = tk.Frame(self)
 		self.numberCPU = IntVar()
 		self.labelCPU = tk.Label(self.frameCPU, text='Multiprocessing :', font= "Arial 14")
 		self.labelCPU.grid(row=0, columnspan=3)
-		
 		self.labelNumberCPU = tk.Label(self.frameCPU,
 			text=f'Number of thread : ')
 		self.labelNumberCPU.grid(row=1, column=0, sticky="e")
@@ -791,9 +900,8 @@ class ParamGUI(tk.Frame):
 		self.labelMaxCPU = tk.Label(self.frameCPU, text=f'max ({multiprocessing.cpu_count()}).')
 		self.labelMaxCPU.grid(row=1, column=2)
 		self.frameCPU.pack(pady=0.5)
-
 		self.frameBackNext = Frame(self)
-		self.buttonBack = ttk.Button(self.frameBackNext, text="Back", width=25, command=lambda: self._back())
+		self.buttonBack = ttk.Button(self.frameBackNext, text="Back", width=25, command=lambda: self.controller.show_frame("InputGUI", self.runObject))
 		self.buttonBack.pack(side=LEFT, fill=X)
 		self.buttonNext = ttk.Button(self.frameBackNext, text="Next", width=25, command=lambda: self._next())
 		self.buttonNext.pack(side=RIGHT, fill=X)
@@ -804,12 +912,6 @@ class ParamGUI(tk.Frame):
 			return True
 		else:
 			return False
-
-	def _back(self):
-		if self.runObject.mode == 'explore':
-			self.controller.show_frame('InputGUIExplore', self.runObject)
-		elif self.runObject.mode == 'cluster':
-			self.controller.show_frame('InputGUIBatch', self.runObject)
 
 	def _next(self):
 		try:
@@ -826,8 +928,6 @@ class ParamGUI(tk.Frame):
 				self.runObject.upDiffThreshold = float(self.comboUp.get())
 				self.runObject.downDiffThreshold = float(self.comboDown.get())
 				print('==============================')
-				print('Selected Parameters')
-				print('==============================')
 				print(f'sizeX : {self.runObject.sizeX}')
 				print(f'sizeY : {self.runObject.sizeY}')		
 				print(f'mode : {self.runObject.mode}')
@@ -842,15 +942,12 @@ class ParamGUI(tk.Frame):
 				print(f'dicSample : {self.runObject.dicSample}')
 				print(f'up : {self.runObject.upDiffThreshold}')
 				print(f'down : {self.runObject.downDiffThreshold}')
-				print(f'Save : {self.runObject.saveMatrix}')
-				print('==============================\n')
 				self.controller.clusterMatrix(self.runObject)
 		except:
 			tk.messagebox.showwarning('Error with Values', 'You have to provide a value for each field.', icon='warning')
 
 class AutocompleteEntry(Entry):
 	"""
-	Autocomplete list with genes names
 	AutocompleteEntry(list_input_gene_name, frame_Entry, frame_ListBox)
 	"""
 	def __init__(self, list_input_gene_name, frame_Entry, frame_ListBox):
@@ -939,9 +1036,6 @@ class AutocompleteEntry(Entry):
 		return [w for w in self.list_input_gene_name if re.match(pattern, w)]
 
 class GoGUI(object):
-	"""
-	Gene Ontology GUI
-	"""
 	def __init__(self, master, listGeneQuery, listGOBank, title):
 		self.master = master
 		self.dic_Com_ListGene = {}
@@ -953,7 +1047,6 @@ class GoGUI(object):
 			self.master.minsize(width=600, height=500)
 		else:
 			self.master.minsize(width=600, height=100)
-		
 		if 'All - Communities' not in self.titleGO:
 			self.frameGOWindow = tk.Frame(self.master)
 			self.listBoxMultiple  = ttk.Treeview(self.frameGOWindow, columns=[0, 'p-values', 'Common genes'],
@@ -999,7 +1092,6 @@ class GoGUI(object):
 				command= lambda : Barplot(tk.Toplevel(self.master), self.table, self.titleGO, self.comboGOBank.get()))
 			self.barplotButton.pack(side=LEFT)
 			self.barplotButton.config(state = "disabled")
-
 			self.heatmapButton = ttk.Button(self.frameGOButtonBot, text="Heatmap",
 				command= lambda : HeatmapGO(tk.Toplevel(self.master), self.listGeneQuery, self.table, self.titleGO, self.comboGOBank.get()))
 			self.heatmapButton.pack(side=LEFT)
@@ -1052,15 +1144,13 @@ class GoGUI(object):
 			new_pvalues[index] = new_values[i]
 		return new_pvalues
 
+
 	def inter(self, liste1, liste2):
 		liste1 = set(liste1)
 		liste2 = set(liste2)
 		return list(liste2 & liste1)
 
 	def analysisGO(self):
-		"""
-		Perform gene ontology enrichment analysis
-		"""
 		if 'All - Communities' in self.titleGO:
 			list_GO = []
 			dic = {}
@@ -1149,9 +1239,6 @@ class GoGUI(object):
 			self.table.to_csv(filename, sep='\t')
 
 class HeatmapGOAll(object):
-	"""
-	Heatmap for communities
-	"""
 	def __init__(self, master, listGeneQuery, table, titleGO, comboGOBank, minV, maxV, annotation):
 		self.master = master
 		self.frameTOP = tk.Frame(self.master)
@@ -1192,9 +1279,6 @@ class HeatmapGOAll(object):
 			df.iloc[::-1].to_csv(filename, sep='\t')
 
 class HeatmapGO(object):
-	"""
-	Heatmap for gene ontology enrichment analysis
-	"""
 	def __init__(self, master, listGeneQuery, table, titleGO, comboGOBank):
 		self.master = master
 		self.frameTOP = tk.Frame(self.master)
@@ -1270,9 +1354,6 @@ class HeatmapGO(object):
 			return 0
 
 class Barplot(object):
-	"""
-	Barplot for gene ontology enrichment analysis
-	"""
 	def __init__(self, master, df, titleGO, comboGOBank):
 		self.master = master
 		self.master.title(f'Barplot GO Terms - {titleGO} - {comboGOBank}')
@@ -1316,9 +1397,6 @@ class Barplot(object):
 		self.master.destroy()
 
 class mainGUI(object):
-	"""
-	Main GUI panel
-	"""
 	def __init__(self, master, runObject):
 		self.master = master
 		self.master.protocol('WM_DELETE_WINDOW', self.close_windows)
@@ -1327,13 +1405,13 @@ class mainGUI(object):
 		self.list_GO_Bank = self.loadGOBank()
 		self.frame = tk.Frame(self.master)
 		self.frameText = tk.Frame(self.frame,  height=10, width=10)
-		self.master.title('MULTILAYER')
+		self.master.title('MULTILAYER - SysFate')
 		if self.runObject.mode == 'explore':
 			self.master.minsize(260, 405)
 			self.textOverview = Label(self.frameText, text='Informations :')
 			self.textOverview.pack(side=TOP)
 			self.textStatPanel = Text(self.frameText, height=9, width=30)
-			self.nameSample = list(self.runObject.dicSample.keys())[0]
+			self.nameSample = list(self.runObject.dicSample.keys())[0]		
 			self.textString = f'Sample ID:\n\t{self.nameSample}\n\
 				Matrix Size:\n\t{self.runObject.sizeX}x{self.runObject.sizeY} ({self.runObject.totalGexel} gexels)\n\
 				Gexels Containing Signal:\n\t{len(self.runObject.dicSample[self.nameSample].raw.columns.values)} ({round((len(self.runObject.dicSample[self.nameSample].diff.columns.values)/self.runObject.totalGexel)*100, 2)}%)\n\
@@ -1415,8 +1493,6 @@ class mainGUI(object):
 				command = lambda : self.matrixWindow('Normalized Counts Matrix', self.runObject.dicSample[self.nameSample].dicGexelNorm,
 				self.runObject.dicSample[self.nameSample].dicSampleNorm, self.runObject.dicSample[self.nameSample].maxCountNorm,
 				self.runObject.dicSample[self.nameSample].minCountNorm, 'rainbow', self.countDisplayString, self.nameSample, []))
-			if self.runObject.dicSample[self.nameSample].dicGexelNorm == None:
-				self.normalizedCountMatrixButton.config(state = "disabled")
 			self.diffGeneButton = ttk.Button(self.frame, text = 'Gene Expression Levels', width = 25, 
 				command = lambda : self.matrixWindow('Gene Expressed Matrix', self.runObject.dicSample[self.nameSample].listGexelDiff,
 				self.runObject.dicSample[self.nameSample].dicSampleDiff, 4, -4, 'diffGeneGradient', self.countDisplayStringDiff, self.nameSample, []))
@@ -1437,40 +1513,19 @@ class mainGUI(object):
 			self.patternButton.config(state = 'disabled')	
 			self.communitiesButton.config(state = 'disabled')
 		self.frameQuit = Frame(self.frame)
-		self.buttonHome = ttk.Button(self.frameQuit, text = 'Home', command = self.goHome)
-		self.buttonHome.pack(side = TOP, fill=X)
 		self.buttonQuit = ttk.Button(self.frameQuit, text = 'Quit', command = self.close_windows)
-		self.buttonQuit.pack(side = BOTTOM, fill=X)
+		self.buttonQuit.pack(fill=X)
 		self.frameQuit.pack(fill = X)
 		self.frame.pack(fill=X, side=LEFT)
-
-	def goHome(self):
-		"""
-		Back to home
-		"""
-		closeGUI = tk.messagebox.askquestion('Go Home', 'All loaded data will be lost.', icon='warning')
+		
+	def saveSession(self):
+		filename = asksaveasfilename(defaultextension=".save", filetypes=(("save file", "*.save"),))
+		closeGUI = tk.messagebox.askquestion('Save session', 'This step can take few minutes.', icon='warning')
 		if closeGUI == 'yes':
-			self.master.destroy()
-			delattr(self.runObject, 'sizeX')
-			delattr(self.runObject, 'sizeY')
-			delattr(self.runObject, 'totalGexel')
-			delattr(self.runObject, 'mode')
-			delattr(self.runObject, 'raw')
-			delattr(self.runObject, 'norm')
-			delattr(self.runObject, 'diff')
-			delattr(self.runObject, 'transpose')
-			delattr(self.runObject, 'round')
-			delattr(self.runObject, 'method')
-			delattr(self.runObject, 'indexGetParameters')
-			delattr(self.runObject, 'dicSample')
-			delattr(self.runObject, 'numberCPU')
-			delattr(self.runObject, 'indexRun')
-			delattr(self.runObject, 'minPattern')
-			delattr(self.runObject, 'saveMatrix')
-			delattr(self.runObject, 'upDiffThreshold')
-			delattr(self.runObject, 'downDiffThreshold')
-			del self.runObject
-			main()		
+			startTime = time.time()
+			stopTime = time.time()
+			print(f'Time {stopTime-startTime} secondes')
+
 		
 	def fillListbox(self, listBox, listData):
 		listBox.delete(0, END)
@@ -1478,9 +1533,6 @@ class mainGUI(object):
 			listBox.insert(END, i)
 
 	def selection_listbox(self, event):
-		"""
-		Select sample in batch mode
-		"""
 		self.sampleSelected = self.listCluster.get(ACTIVE)
 		self.displaySampleSelected.set(self.sampleSelected)
 		print(f'You selected {self.sampleSelected}')
@@ -1491,9 +1543,6 @@ class mainGUI(object):
 		self.communitiesButton.config(state = 'normal')
 
 	def communitiesArgs(self, master):
-		"""
-		Communities arguments panel
-		"""
 		self.frameArg = tk.Frame(master)
 		self.frameWeight = tk.Frame(self.frameArg)
 		self.labelArg = tk.Label(self.frameWeight, text='Arguments for communities')
@@ -1529,9 +1578,6 @@ class mainGUI(object):
 		self.runcommunitiesButton.pack()
 
 	def louvain(self, dfLouvain, weightIndex, randomIndex, frame):
-		"""
-		Perform communities detection with Louvain algorithm
-		"""
 		dic_valCount_df = {}
 		dic_valCount_index = {}
 		indexRandom = 1
@@ -1547,11 +1593,11 @@ class mainGUI(object):
 			df.drop(indexNames2, inplace=True)
 			if weightIndex == 1:
 				nw = nx.from_pandas_edgelist(df, source='TF', target='TG', edge_attr='Weight')
-				partition = louvain.best_partition(nw, weight='Weight')#, random_state=100)
+				partition = louvain.best_partition(nw, weight='Weight')
 				weightString = 'Weight'
 			elif weightIndex == 0:
 				nw = nx.from_pandas_edgelist(df, source='TF', target='TG', edge_attr=None)
-				partition = louvain.best_partition(nw, weight='None')#, random_state=100)
+				partition = louvain.best_partition(nw, weight='None')
 				weightString = 'without Weight'
 			df['Community'] = df['Community'].map(partition)
 			tmp = df['Community'].value_counts().to_string()
@@ -1570,9 +1616,6 @@ class mainGUI(object):
 				self.runObject.dicSample[self.nameSample].dicSampleDiff, 0, 0, 'communitiesGradient', self.countDisplayStringDiff, self.nameSample, self.runObject.dicSample[self.nameSample].currentLouvain)
 
 	def logFileRandomCommunities(self, tupleSort, total):
-		"""
-		Results of Louvain communities detection
-		"""
 		print('##########\n#  LOG   #\n##########')
 		for i in range(len(tupleSort)):
 			if i == 0:
@@ -1641,7 +1684,7 @@ class mainGUI(object):
 		self.windowGUI = tk.Toplevel(self.master)
 		self.title = title
 		listGexelCount = []
-		dicGexel = dict(sampleMatrix.apply(lambda x : StartGUI.createGexel(StartGUI, x, listGexelCount, self.runObject), axis=0))
+		dicGexel = dict(sampleMatrix.apply(lambda x : StartGUI.createGexel(StartGUI, x, listGexelCount), axis=0))
 		maxCountGexel =  max(listGexelCount)
 		minCountGexel =  min(listGexelCount)
 		dicGeneSample = dict(sampleMatrix.apply(lambda x : StartGUI.createGeneSample(StartGUI, x), axis=1))
@@ -1659,9 +1702,6 @@ class mainGUI(object):
 		return(sorted(list_GO_Bank_temp))
 
 class resultGOClass(object):
-	"""
-	datasets communities heatmap for batch mode
-	"""
 	def __init__(self, master, runObject, df, dic):
 		self.master = master
 		self.runObject = runObject
@@ -1674,7 +1714,7 @@ class resultGOClass(object):
 		self.textTop = Label(self.master, text='Dataset(s) communities', font= "Arial 14")
 		self.textTop.grid(row=0, column=1, sticky=S, pady=0)
 		self.textLeft = Label(self.master, text='C\nl\na\ns\ns\ne\ns', font= "Arial 14")
-		self.textLeft.grid(row=1, column=4, sticky=E, pady=0)		
+		self.textLeft.grid(row=1, column=4, sticky=E, pady=0)
 		self.can = Canvas(self.master, width=((len(self.df.columns.values)+1)*(self.indexMiniSizeGexelX+1)), 
 			height = ((len(self.df.index.values)+1)*(self.indexMiniSizeGexelY+1)))
 		self.can.grid(row=1, columnspan=3, sticky=NW, pady=0)
@@ -1861,6 +1901,7 @@ class resultGOClass(object):
 		x2 = self.indexMiniSizeGexelX
 		y1 = 1
 		y2 = self.indexMiniSizeGexelY
+
 		print(self.df.index.values)
 		print(self.df.columns.values)
 		l = []
@@ -1887,7 +1928,7 @@ class resultGOClass(object):
 				x2 += self.indexMiniSizeGexelX
 			y1 += self.indexMiniSizeGexelY
 			y2 += self.indexMiniSizeGexelY
-			
+
 class wrapperClass(object):
 	def __init__(self, master, runObject):
 		self.master = master
@@ -2035,9 +2076,10 @@ class wrapperClass(object):
 					print(name)
 					mainGUI.logFileRandomCommunities(mainGUI, valCount_index_sort, indexRandom)
 				df_class = dic_valCount_df[valCount_index_sort[0][0]]
-				df_class['TG'] = df_class.apply(self.mergeTG, axis=1)#"{}{}".format(x, 'str'))
+				df_class['TG'] = df_class.apply(self.mergeTG, axis=1)
 				df_class['TF'] = df_class.apply(lambda x : self.mergeTF(x, name), axis=1)
 				list_.append(df_class)
+
 			else:
 				print(f'Agglomerative - {int(self.dicClass[name])}')
 				dic_geneSampleDiffCopy = copy.deepcopy(self.runObject.dicSample[name].dicSampleDiff)
@@ -2105,7 +2147,7 @@ class wrapperClass(object):
 				dfSim = pd.DataFrame(list_similarity, columns=list_column, index=list_column)
 				dfSim = dfSim.transpose()
 				stopTime_sime = time.time()
-				print(f'Time to make similarity  {stopTime_sime-startTime_sim} seconds')
+				print(f'Time to make similarity  {stopTime_sime-startTime_sim} secondes')
 				print('Generate matrix for louvain')
 				dico_tot ={}
 				dfSim.apply(lambda x: StartGUI.dico_df(StartGUI, x, dico_tot))
@@ -2145,7 +2187,7 @@ class wrapperClass(object):
 					print(name)
 					mainGUI.logFileRandomCommunities(mainGUI,valCount_index_sort, indexRandom)
 				df_class = dic_valCount_df[valCount_index_sort[0][0]]
-				df_class['TG'] = df_class.apply(self.mergeTG, axis=1)#"{}{}".format(x, 'str'))
+				df_class['TG'] = df_class.apply(self.mergeTG, axis=1)
 				df_class['TF'] = df_class.apply(lambda x : self.mergeTF(x, name), axis=1)
 				maxCommunitiesSample = max(df_class['Community'])
 				print(f'For {name} Number of communities {maxCommunitiesSample+1}')
@@ -2183,6 +2225,7 @@ class wrapperClass(object):
 		if indexRandom != 1:
 			mainGUI.logFileRandomCommunities(mainGUI, valCount_index_sort, indexRandom)
 		print('Write')
+
 		dic_valCount_df_all[valCount_index_sort[0][0]].to_csv(filename, sep='\t')
 		df_heatmap = dic_valCount_df_all[valCount_index_sort[0][0]].copy()
 		df_heatmap = df_heatmap.sort_values(by ='Community', ascending=False)
@@ -2359,7 +2402,7 @@ class wrapperClass(object):
 		ar = np.array(l)
 		dfT = pd.DataFrame(ar, index=dic.keys(), columns=list(set(list_GO)))
 		HeatmapGOAll(tk.Toplevel(master), self.dicQuery, dfT, f'{self.titleGO} - TOP{indexTop}', self.comboGOBank.get(), minV, maxV, False)
-	
+
 	def fisher(self, input, disease, nb_totgen):
 		input = set(input)
 		disease = set(disease)
@@ -2377,23 +2420,19 @@ class wrapperClass(object):
 
 
 class matrixGUI(object):
-	"""
-	Panel allows user choose which matrix to display
-	"""
 	def __init__(self, title, master, runObject, countDisplayStringCoor, countDisplayString, nameSample, dicGexel, dicGeneSample, maxCountGexel, minCountGexel, gradient, listGOBank, currentLouvain):
 		self.master = master
 		self.runObject = runObject
 		self.nameSample = nameSample
 		self.dicGexel = dicGexel
 		self.dicGeneSample = dicGeneSample
-		self.maxCountGexel = round(maxCountGexel, 2)
-		self.minCountGexel = round(minCountGexel, 2)
+		self.maxCountGexel = maxCountGexel
+		self.minCountGexel = minCountGexel
 		self.listGeneCommunities = []
 		if 'All - Communities' in title:
 			self.title = title[6:]
 		else:
 			self.title = title
-		self.indexLog = 0
 		self.master.title(self.title)
 		self.listGOBank = listGOBank
 		self.frame = tk.Frame(self.master)
@@ -2423,11 +2462,6 @@ class matrixGUI(object):
 		self.frameMatrix = tk.Frame(self.frame)
 		self.can = Canvas(self.frameMatrix, width=((self.runObject.sizeX+1)*self.indexMiniSizeGexel)+1, 
 			height = ((self.runObject.sizeY+1)*self.indexMiniSizeGexel)+1)
-		w = Canvas.winfo_width(self.can)
-		h = Canvas.winfo_height(self.can)		
-		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 		self.colorGradientFrame = tk.Frame(self.frameMatrix)
 		self.colorScale = Canvas(self.colorGradientFrame, width=255*2, height=15)
 		if self.gradient == 'patternGradient' or self.gradient == 'communitiesGradient':
@@ -2461,24 +2495,13 @@ class matrixGUI(object):
 			self.list_number_communities.extend(self.currentLouvain['Community'].value_counts().index.tolist())
 			self.menu()
 		else:
-			self.showButton = ttk.Button(self.buttonFrame, text = 'Menu', width = 12, command = lambda : self.hideMenu())
+			self.showButton = ttk.Button(self.buttonFrame, text = 'Menu', width = 8, command = lambda : self.hideMenu())
 			self.showButton.pack(side=LEFT)
-		self.quitButton = ttk.Button(self.buttonFrame, text = 'Quit', width = 12, command = self.quit)#self.close_windows)
+		self.quitButton = ttk.Button(self.buttonFrame, text = 'Quit', width = 8, command = self.quit)
 		self.quitButton.pack(side=RIGHT)
-		self.saveCanvasButton = ttk.Button(self.buttonFrame, text = 'Save Image', width = 12, command = lambda : self.saveCanvas())
-		self.saveCanvasButton.pack(side=RIGHT)
 		self.frameMatrix.pack(side=LEFT, padx=10)
 		self.buttonFrame.pack()
 		self.frame.pack()
-
-	def saveCanvas(self):
-		filename = asksaveasfilename(defaultextension=".png", filetypes=(('Portable Network Graphics', '*.png'),))
-		if filename != '':
-			if self.gradient != 'patternGradient' and self.gradient != 'communitiesGradient':
-				self.colorGradient()
-				self.draw.text((self.indexMiniSizeGexel, 4), str(self.minValueGradient.get()),(0,0,0))
-				self.draw.text((550+(2*self.indexMiniSizeGexel), 4), str(self.maxValueGradient.get()),(0,0,0))
-			self.saveCanvasImage.save(filename)
 
 	def saveCommunities(self):
 		filename = asksaveasfilename(defaultextension=".tsv", filetypes=(('Tabulation-separated values', '*.tsv'),))
@@ -2528,6 +2551,7 @@ class matrixGUI(object):
 			self.frameSearchTool = tk.Frame(self.frameMenu)
 			self.frameSearchButton = tk.Frame(self.frameSearchTool)
 			self.frameSearch = tk.Frame(self.frameSearchTool)
+			self.indexLog = 0
 			self.searchGene = AutocompleteEntry(self.dicGeneSample.keys(), self.frameSearchButton, self.frameSearch)
 			self.searchGene.pack(side = TOP, fill=BOTH)
 			if self.gradient == 'patternGradient':
@@ -2553,7 +2577,7 @@ class matrixGUI(object):
 				self.comboThresholdSimilarity.current(0)
 				self.comboThresholdSimilarity.pack(side=LEFT)
 				self.labelThresholdSimilirityPercent = Label(self.frameThresoldSimilarity, text=' %.')
-				self.labelThresholdSimilirityPercent.pack(side=LEFT)
+				self.labelThresholdSimilirityPercent.pack(side=LEFT)			
 				self.frameThresoldSimilarity.pack(side = TOP, fill=X)
 				self.similarityButton = ttk.Button(self.frameSearchButton, text = 'Similarity', command = lambda : self.similarity())
 				self.similarityButton.pack(side = TOP, fill=X)
@@ -2578,7 +2602,7 @@ class matrixGUI(object):
 			else:
 				self.frameThresold = tk.Frame(self.frameSearchButton)
 				self.labelThresholdMinMax = Label(self.frameThresold, text='Threshold :')
-				self.labelThresholdMinMax.pack(side = TOP, fill=X)
+				self.labelThresholdMinMax.pack(side = TOP, fill=X)			
 				self.frameThresoldmin = tk.Frame(self.frameThresold)
 				self.labelThresholdMin = Label(self.frameThresoldmin, text='Min :')
 				self.labelThresholdMin.pack(side = LEFT)
@@ -2699,7 +2723,7 @@ class matrixGUI(object):
 		listData.sort(key=lambda x: x[0], reverse = True)
 		for i in listData:
 			if i[0] >= self.runObject.minPattern:
-				listBox.insert(END, f'{i[0]} | {i[1].upper()}')
+				listBox.insert(END, f'{i[0]} | {i[1]}')
 
 	def hideMenu(self):
 		"""
@@ -2750,14 +2774,10 @@ class matrixGUI(object):
 					g = 255 - (x-128)*2
 					b = 0
 			self.colorScale.create_rectangle(x*2, 0, x*2 + 2, 16, fill=self.rgb(r, g, b), outline=self.rgb(r, g, b))
-			self.draw.rectangle([(x*2)+(3*self.indexMiniSizeGexel), 0, (x*2)+(3*self.indexMiniSizeGexel) + 2, 16], fill = self.rgb(r, g, b), outline = self.rgb(r, g, b))
 			list_color_hex.append(self.rgb(r, g, b))
 		return list_color_hex
 
 	def colors(self):
-		"""
-		Colors for similarity patterns 
-		"""
 		self.colorScale.delete('all')
 		list_color_hex = [self.rgb(0, 0, 255), self.rgb(75, 0, 230), self.rgb(244, 114, 208), self.rgb(0, 191, 255), self.rgb(50, 205, 50), \
 			self.rgb(96, 169, 23), self.rgb(255, 255, 0), self.rgb(240, 163, 10), self.rgb(250, 104, 0), \
@@ -2766,11 +2786,8 @@ class matrixGUI(object):
 		x2 = 50
 		for color in list_color_hex:
 			self.colorScale.create_rectangle(x1, 0, x2, 16, fill=color, outline=color)
-			self.draw.rectangle([x1+(3*self.indexMiniSizeGexel), 0, x2+(3*self.indexMiniSizeGexel), 16], fill = color, outline = color)
 			x1 += 50
 			x2 += 50
-		self.draw.text((self.indexMiniSizeGexel, 4), '< 0%',(0,0,0))
-		self.draw.text((x2+(2*self.indexMiniSizeGexel), 4), '100%',(0,0,0))
 		return list_color_hex
 
 	def rgb(self, r, g, b):
@@ -2786,15 +2803,9 @@ class matrixGUI(object):
 		self.master.destroy()
 
 	def similarity(self):
-		"""
-		Co-Expression Pattern analysis matrix
-		"""
 		if self.patternDisplayString.get() == '':
 			tk.messagebox.showwarning('No pattern selected !', 'You have to select a pattern before performing a similarity analysis.', icon='warning')
 		else:
-			self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-				(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-			self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 			dic = {}
 			listSort = set()
 			finalDic = {}
@@ -2858,8 +2869,6 @@ class matrixGUI(object):
 						if coordinateTemp in finalDic.keys():
 							can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 								fill = self.colorList[finalDic[coordinateTemp]], activefill = 'white', activeoutline = 'white')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = self.colorList[finalDic[coordinateTemp]], outline = 'black')
 							self.can.tag_bind(can_temp, "<Enter>", lambda event,
 								countDisplay = '',
 								coordinate = coordinateTemp,
@@ -2873,13 +2882,9 @@ class matrixGUI(object):
 						else:
 							can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 								fill = 'black')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = 'black', outline = 'black')
 					else:
 						self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'grey')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'grey', outline = 'black')
 					x1 += self.indexMiniSizeGexel
 					x2 += self.indexMiniSizeGexel
 				y1 += self.indexMiniSizeGexel
@@ -2891,9 +2896,6 @@ class matrixGUI(object):
 			self.scatterFrame.maxsize(500, 380)
 
 	def displayScatter(self, master, df):
-		"""
-		Co-Expression Pattern analysis table
-		"""
 		listCol = [i for i in df.index]
 		self.frameScatterWindow = tk.Frame(master)
 		self.listBoxScatterResult = ttk.Treeview(self.frameScatterWindow, columns=listCol,
@@ -2925,7 +2927,7 @@ class matrixGUI(object):
 		filename = asksaveasfilename(defaultextension=".tsv", filetypes=(('Tabulation-separated values', '*.tsv'),))
 		if filename != '':
 			df.to_csv(filename, sep='\t')
-	
+
 	def geneOntology(self, listQuery, listGOBank, title):
 		if self.gradient == 'patternGradient' and len(self.listGeneGO) == 0:
 			tk.messagebox.showwarning('No Co-Expression Patterns', 'Perform a Co-Expression Pattern analysis before asking for GO terms.', icon='warning')
@@ -2958,51 +2960,21 @@ class matrixGUI(object):
 			self.thresholdUpDiff.set(1)
 		if self.thresholdDownDiff.get() != -1:
 			self.thresholdDownDiff.set(-1)
-		if self.indexLog == 1:
-			self.checkLog.deselect()
-		self.indexLog = 0
 		self.thresholdMin.set('')
 		self.thresholdMax.set('')
 		self.master.title(self.title)
 		self.drawingMatrix(self.colorList)
 
 	def drawingMatrix(self, colorList):
-		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 		self.can.delete('all')
-		if self.indexLog == 1:
-			self.master.title(f'{self.title} - Log')
-		else:
-			self.master.title(self.title)
+		self.master.title(self.title)
 		x1 = 1
 		x2 = self.indexMiniSizeGexel
 		y1 = 1
 		y2 = self.indexMiniSizeGexel
 		if self.gradient != 'patternGradient':
-			if self.indexLog == 1:
-				if self.thresholdMax.get() == '':
-					self.maxValueGradient.set(int(np.log2(self.maxCountGexel)))
-				else:
-					self.maxValueGradient.set(float(self.thresholdMax.get()))
-
-				if self.thresholdMin.get() == '':
-					self.minValueGradient.set(int(np.log2(self.minCountGexel)))
-				else:
-					self.minValueGradient.set(float(self.thresholdMin.get()))
-				
-			else:
-				if self.thresholdMax.get() == '':
-					self.maxValueGradient.set(int(self.maxCountGexel))
-				else:
-					self.maxValueGradient.set(float(self.thresholdMax.get()))
-				
-
-				if self.thresholdMin.get() == '':
-					self.minValueGradient.set(int(self.minCountGexel))
-				else:
-					self.minValueGradient.set(float(self.thresholdMin.get()))
-				
+			self.maxValueGradient.set(int(self.maxCountGexel))
+			self.minValueGradient.set(int(self.minCountGexel))
 		for y in range(1, self.runObject.sizeY+1):
 			x1 = 1
 			x2 = self.indexMiniSizeGexel
@@ -3012,57 +2984,22 @@ class matrixGUI(object):
 					if coordinateTemp in self.dicGexel:
 						can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'black')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'black', outline = 'black')
 					else:
 						self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'grey')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'grey', outline = 'black')
 				elif coordinateTemp in self.dicGexel.keys():
 					try:
-						if self.indexLog == 1:
-							if np.log2(self.dicGexel[coordinateTemp].totalGeneCount) <= float(self.minValueGradient.get()) and self.thresholdMin.get() != '':
-								indexColor = 'black'
-							elif np.log2(self.dicGexel[coordinateTemp].totalGeneCount) >= float(self.maxValueGradient.get()):
-								indexColor = 1
-							elif (np.log2(self.maxCountGexel)-np.log2(self.minCountGexel)) == 0:
-								indexColor = 1
-							else:
-								indexColor = ((np.log2(self.dicGexel[coordinateTemp].totalGeneCount)-np.log2(self.minCountGexel))/(np.log2(self.maxCountGexel)-np.log2(self.minCountGexel)))
-						else:
-							if self.dicGexel[coordinateTemp].totalGeneCount <= float(self.minValueGradient.get()) and self.thresholdMin.get() != '':
-								indexColor = 'black'
-							elif self.dicGexel[coordinateTemp].totalGeneCount >= float(self.maxValueGradient.get()):
-								indexColor = 1
-							elif (self.maxCountGexel-self.minCountGexel) == 0:
-								indexColor = 1
-							else:
-								indexColor = (((self.dicGexel[coordinateTemp].totalGeneCount)-(self.minCountGexel))/((self.maxCountGexel)-(self.minCountGexel)))
-						if indexColor == 0:
-							color = colorList[0]
-						elif indexColor == 'black':
-							color = 'black'
-						else:
-							color = colorList[math.ceil(indexColor*len(colorList))-1]
+						indexColor = math.ceil(self.dicGexel[coordinateTemp].totalGeneCount*len(colorList)/ self.maxCountGexel)
+						color = colorList[indexColor-1]
 					except ValueError:
 						color = 'white'
 					can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 						fill = color, activefill = 'white', activeoutline = 'white')
-					self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-						fill = color, outline = 'black')
-					if self.indexLog == 1:
-						self.can.tag_bind(can_temp, "<Enter>", lambda event,
-							countDisplay = np.log2(self.dicGexel[coordinateTemp].totalGeneCount),
-							coordinate = coordinateTemp,
-							countDisplayString = self.countDisplayString 
-							: self.gexel_active(event, countDisplay, coordinate, countDisplayString))
-					else:
-						self.can.tag_bind(can_temp, "<Enter>", lambda event,
-							countDisplay = self.dicGexel[coordinateTemp].totalGeneCount,
-							coordinate = coordinateTemp,
-							countDisplayString = self.countDisplayString 
-							: self.gexel_active(event, countDisplay, coordinate, countDisplayString))
+					self.can.tag_bind(can_temp, "<Enter>", lambda event,
+						countDisplay = self.dicGexel[coordinateTemp].totalGeneCount,
+						coordinate = coordinateTemp,
+						countDisplayString = self.countDisplayString 
+						: self.gexel_active(event, countDisplay, coordinate, countDisplayString))
 					self.can.tag_bind(can_temp, "<Leave>", lambda event,
 						countDisplay = '',
 						coordinate = '', 
@@ -3071,26 +3008,18 @@ class matrixGUI(object):
 				else:
 					self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 						fill = 'grey')
-					self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-						fill = 'grey', outline = 'black')
 				x1 += self.indexMiniSizeGexel
 				x2 += self.indexMiniSizeGexel
 			y1 += self.indexMiniSizeGexel
 			y2 += self.indexMiniSizeGexel
 
 	def comMatrix(self, value):
-		"""
-		Communities matrix
-		"""
 		try:
 			self.listBoxCommunities.delete(0, END)
 			self.displayNumberPerCommunities.set('')
 		except:
 			pass
-		df = self.currentLouvain
-		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
+		df = self.currentLouvain	
 		if value == 'All':
 			self.listGeneCommunities = df.drop_duplicates(subset =['TF','Community'], keep = 'first').set_index('TF')['Community'].to_dict()
 		else:	
@@ -3136,42 +3065,26 @@ class matrixGUI(object):
 						if coordinateTemp in dic_Coordiante_Communities.keys():
 							can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 								fill = listColor[((dic_Coordiante_Communities[coordinateTemp]+1)%(len(listColor)))-1], activefill = 'white', activeoutline = 'white')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = listColor[((dic_Coordiante_Communities[coordinateTemp]+1)%(len(listColor)))-1], outline = 'black')
 						else:			
 							can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
-								fill = 'black')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = 'black', outline = 'black')
+							fill = 'black')
 					else:
 						can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'grey')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'grey', outline = 'black')
 				else:
 					if coordinateTemp in self.dicGexel:
 						self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'black')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'black', outline = 'black')
 					else:
 						self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'grey')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'grey', outline = 'black')
 				x1 += self.indexMiniSizeGexel
 				x2 += self.indexMiniSizeGexel
 			y1 += self.indexMiniSizeGexel
 			y2 += self.indexMiniSizeGexel
 
 	def patternMatrix(self):
-		"""
-		Display the selected gene's pattern
-		"""
 		if self.searchGene.get() in self.dicGeneSample.keys():
-			self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-				(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-			self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 			self.colorScale.delete('all')
 			self.maxValueGradient.set('')
 			self.minValueGradient.set('')
@@ -3199,8 +3112,6 @@ class matrixGUI(object):
 							if coordinateTemp in self.dicGeneSample[geneName].dic_pattern[index]:
 								can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 									fill = listColor[(index%(len(listColor)))-1], activefill = 'white', activeoutline = 'white')
-								self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-									fill = listColor[(index%(len(listColor)))-1], outline = 'black')
 								self.can.tag_bind(can_temp, "<Button-1>", lambda event,
 									indexSelected = index,
 									gene = geneName,
@@ -3220,13 +3131,9 @@ class matrixGUI(object):
 						if indexFind == 0:
 							can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 								fill = 'black')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = 'black', outline = 'black')
 					else:
 						can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'grey')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'grey', outline = 'black')
 					x1 += self.indexMiniSizeGexel
 					x2 += self.indexMiniSizeGexel
 				y1 += self.indexMiniSizeGexel
@@ -3235,13 +3142,7 @@ class matrixGUI(object):
 				tk.messagebox.showwarning('No pattern detected', 'No pattern is detected for the selected gene.', icon='warning')
 		
 	def matrixForGene(self, colorList):
-		"""
-		Display a selected gene
-		"""
 		indexGexelCreate = 0
-		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 		if self.searchGene.get() in self.dicGeneSample.keys():
 			if self.gradient == 'patternGradient':
 				self.colorScale.delete('all')
@@ -3305,8 +3206,6 @@ class matrixGUI(object):
 									indexColor = 127
 								can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 									fill = colorList[indexColor], activefill = 'white', activeoutline = 'white')
-								self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-									fill = colorList[indexColor], outline = 'black')
 								self.can.tag_bind(can_temp, "<Enter>", lambda event,
 									countDisplay = self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp],
 									coordinate = coordinateTemp,
@@ -3320,39 +3219,26 @@ class matrixGUI(object):
 								indexGexelCreate += 1
 							elif self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp] != 0:
 								if self.thresholdMin.get() != '' or self.thresholdMax.get() != '':
-
 									if self.thresholdMax.get() == '':
 										indexMax = self.dicGeneSample[geneName].maxCount
 									else:
 										indexMax = self.thresholdMax.get()
-
 									if self.thresholdMin.get() == '':
-										indexMin = self.dicGeneSample[geneName].minCount
+										indexMin = self.dicGeneSample[geneName].maxCount
 									else:
 										indexMin = self.thresholdMin.get()
-
 									if self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp] < float(indexMin):
 										color = 'black'
 									elif self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp] >= float(indexMax):
 										color = colorList[256-1]
 									else:
-										indexColor = (((self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])-(float(indexMin)))/(float(indexMax)-float(indexMin)))
-										if math.ceil(indexColor*len(colorList)) == 0:
-											color = colorList[0]
-										else:
-											color = colorList[math.ceil(indexColor*len(colorList))-1]
+										indexColor = math.ceil(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp]*len(colorList)/ float(indexMax))
+										color = colorList[indexColor-1]
 								else:
-									indexMin = self.dicGeneSample[geneName].minCount
-									indexMax = self.dicGeneSample[geneName].maxCount
-									indexColor = (((self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])-(float(indexMin)))/(float(indexMax)-float(indexMin)))
-									if indexColor == 0:
-										color = colorList[0]
-									else:
-										color = colorList[math.ceil(indexColor*len(colorList))-1]
+									indexColor = math.ceil(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp]*len(colorList)/ self.dicGeneSample[geneName].maxCount)
+									color = colorList[indexColor-1]
 								can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 									fill = color, activefill = 'white', activeoutline = 'white')
-								self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-									fill = color, outline = 'black')
 								self.can.tag_bind(can_temp, "<Enter>", lambda event,
 									countDisplay = self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp],
 									coordinate = coordinateTemp,
@@ -3366,32 +3252,19 @@ class matrixGUI(object):
 							else:
 								self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 									fill = 'black')
-								self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-									fill = 'black', outline = 'black')
 						else:
 							self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
-								fill = 'grey')
-							self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-								fill = 'grey', outline = 'black')
+								fill = 'grey')	
 						x1 += self.indexMiniSizeGexel
 						x2 += self.indexMiniSizeGexel
 					y1 += self.indexMiniSizeGexel
 					y2 += self.indexMiniSizeGexel
-		elif self.searchGene.get() =='':
-			self.drawingMatrix(self.colorList)
 		else:
-			if indexGexelCreate == 0 and self.gradient == 'diffGeneGradient':
-				tk.messagebox.showwarning('Selected gene is not differentially expressed', 'Selected gene is not differentially expressed.', icon='warning')
-			else:
-				tk.messagebox.showwarning('Name of gene is not found', 'Please provide a correct gene name.', icon='warning')
-	
+			tk.messagebox.showwarning('Name of gene is not found', 'Please provide a correct gene name.', icon='warning')
+		if indexGexelCreate == 0 and self.gradient == 'diffGeneGradient':
+			tk.messagebox.showwarning('Selected gene is not differentially expressed', 'Selected gene is not differentially expressed.', icon='warning')
+
 	def matrixLog(self, colorList):
-		"""
-		Display matrix with log values
-		"""
-		self.saveCanvasImage = PIL.Image.new('RGBA', (int(((self.runObject.sizeX+1)*(self.indexMiniSizeGexel))+16),
-			(int((self.runObject.sizeY+1)*(self.indexMiniSizeGexel))+16)), (0,0,0,0))
-		self.draw = PIL.ImageDraw.Draw(self.saveCanvasImage)
 		geneName = self.searchGene.get()
 		self.can.delete('all')
 		self.master.title(f'{self.title} - {geneName} - Log2')
@@ -3432,47 +3305,31 @@ class matrixGUI(object):
 								indexMax = self.thresholdMax.get()
 							if self.thresholdMin.get() == '':
 								if self.dicGeneSample[geneName].minCount == 0:
-									indexMin = self.dicGeneSample[geneName].minCount
+									indexMin = 0
 								else:
 									indexMin = np.log2(self.dicGeneSample[geneName].minCount)
 							else:
 								indexMin = self.thresholdMin.get()
 							if np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp]) < float(indexMin):
 								color = 'black'
-
 							elif np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp]) >= float(indexMax):
 								color = colorList[255]
 							else:
-								indexColor = ((np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])-float(indexMin))/(float(indexMax)-float(indexMin)))
+								indexColor = math.ceil(np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])*len(colorList)/ float(indexMax))
 								if indexColor == 0:
-									color = colorList[0]
+									color = colorList[indexColor]
 								else:
-									color = colorList[math.ceil(indexColor*len(colorList))-1]
+									color = colorList[indexColor-1]
 						else:
-							indexMin = self.dicGeneSample[geneName].minCount
-							indexMax = self.dicGeneSample[geneName].maxCount
-							if self.dicGeneSample[geneName].minCount == 0: 
-								indexMini = 1
-							else: 
-								indexMini = np.log2(self.dicGeneSample[geneName].minCount)
-							if (np.log2(self.dicGeneSample[geneName].maxCount)-indexMini) == 0:
-								indexColor = 1
-							elif indexMin == 0:
-								indexColor = np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])/np.log2(indexMax)
-							elif self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp] == 0:
-								indexColor = 'black'
-							else:
-								indexColor = (np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])-np.log2(indexMin))/(np.log2(indexMax)-np.log2(indexMin))
-							if indexColor == 'black':
-								color = 'black'
-							elif indexColor == 0 or indexColor < 0:
+							indexColor = math.ceil(np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp])*len(colorList)/ np.log2(self.dicGeneSample[geneName].maxCount))
+							if indexColor == 0:
+								color = colorList[indexColor]
+							elif indexColor < 1:
 								color = colorList[0]
 							else:
-								color = colorList[math.ceil(indexColor*len(colorList))-1]
+								color = colorList[indexColor-1]
 						can_temp = self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = color, activefill = 'white', activeoutline = 'white')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = color, outline = 'black')
 						self.can.tag_bind(can_temp, "<Enter>", lambda event,
 							countDisplay = np.log2(self.dicGeneSample[geneName].dic_coordinate_count[coordinateTemp]),
 							coordinate = coordinateTemp,
@@ -3486,13 +3343,9 @@ class matrixGUI(object):
 					else:
 						self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
 							fill = 'black')
-						self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-							fill = 'black', outline = 'black')
 				else:
 					self.can.create_rectangle(x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel,
-						fill = 'grey')
-					self.draw.rectangle([x1+self.indexMiniSizeGexel, y1+self.indexMiniSizeGexel, x2+self.indexMiniSizeGexel, y2+self.indexMiniSizeGexel],
-						fill = 'grey', outline = 'black')
+						fill = 'grey')	
 				x1 += self.indexMiniSizeGexel
 				x2 += self.indexMiniSizeGexel
 			y1 += self.indexMiniSizeGexel
@@ -3508,37 +3361,13 @@ class matrixGUI(object):
 		except:
 			countDisplayString.set(countDisplay)
 
-def main():
+if __name__ == "__main__":
 	run = Run()
 	runGUI = StartGUI(run)
-	#runGUI.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
+	runGUI.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
 	runGUI.mainloop()
 	if run.indexRun == 1:
 		root = tk.Tk()
-		if run.mode == 'explore':
-			#print(f'X {run.sizeX} X cal {run.calculatedX}')
-			#print(f'Y {run.sizeY} Y cal {run.calculatedY}')
-			if run.sizeX < run.calculatedX or run.sizeY < run.calculatedY:
-				tempX = 0
-				tempY = 0
-				if run.sizeX < run.calculatedX:
-					tempX = run.calculatedX
-				else:
-					tempX = run.sizeX
-				if run.sizeY < run.calculatedY:
-					tempY = run.calculatedY
-				else:
-					tempY = run.sizeY
-				warningGUI = tk.messagebox.askquestion('Size warning', f'At least 1 coordinate is out of the given map size {run.sizeX}x{run.sizeY}.\nDo you want to change the current size {run.sizeX}x{run.sizeY} by {tempX}x{tempY} for the display ?', icon='warning')
-				if warningGUI == 'yes':
-					if run.sizeX < run.calculatedX:
-						run.sizeX = run.calculatedX
-					if run.sizeY < run.calculatedY:
-						run.sizeY = run.calculatedY
-					run.totalGexel = run.sizeX * run.sizeY
 		app = mainGUI(root, run) 
-		#root.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
+		root.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
 		root.mainloop()
-
-if __name__ == "__main__":
-	main()
