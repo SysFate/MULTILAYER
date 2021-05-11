@@ -3,7 +3,7 @@
 [![Logo](logo/multilayer2.png)](https://www.sysfate.org/)
 </div>
 
-<a href="https://www.biorxiv.org/content/10.1101/2020.11.09.374660v1"><img src="logo/doi_multilayer.png" width="25%" height="25%"></a>
+<a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00151-4?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471221001514%3Fshowall%3Dtrue"><img src="logo/doi_multilayer.png" width="25%" height="25%"></a>
 
 ## Informations / Authors
 
@@ -15,7 +15,6 @@
 | Author  | MENDOZA PARRA Marco ([Github](https://github.com/SysFate))                                    |
 | Team    | [SysFate](https://www.sysfate.org/)                                                           |
 | Email   | <mmendoza@genoscope.cns.fr>                                                                   |
-
 
 
 # MULTILAYER TOOL
