@@ -3,7 +3,7 @@
 [![Logo](logo/multilayer2.png)](https://www.sysfate.org/)
 </div>
 
-<a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00151-4?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471221001514%3Fshowall%3Dtrue"><img src="logo/doi_multilayer.png" width="25%" height="25%"></a>
+<a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00151-4?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471221001514%3Fshowall%3Dtrue"><img src="logo/doi_multilayer.png" width="35%" height="35%"></a>
 
 ## Informations / Authors
 
