@@ -176,7 +176,6 @@ class StartGUI(tk.Tk):
 			dic_geneSample_raw = dict(sample.raw.apply(self.createGeneSample, axis=1))
 			runObject.dicSample[sample.name].dicGexelRaw = dic_gexel_raw
 			runObject.dicSample[sample.name].dicSampleRaw = dic_geneSample_raw
-		#print(f'Normalisation {sampleData}')
 		listGexelCountNorm = []
 		if runObject.mode == 'cluster':
 			self.normalization(sampleData, sample, runObject, dirNamePath)
