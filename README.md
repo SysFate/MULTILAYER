@@ -110,6 +110,26 @@ pip install numpy
 pip install pandas
 ```
 
+# VISIUM CONVERTER
+
+## Description
+
+You need cellranger of [10xgenomics](https://support.10xgenomics.com/single-cell-gene-expression/software/downloads/6.0), as well as the datasets provided by the Visium platform; namely the matrix in h5 format (Feature / cell matrix HDF5), the feature information files (Feature / cell matrix), the spatial information data (Spatial imaging data), as well as our specialized script “visium converter.py” (dependencies: pandas package).
+
+## Run
+
+First, use this command on “cellranger” to convert the h5 matrix to csv format: `./bin/cellranger mat2csv Feature/cell matrix_HDF5.h5 out_file_matrix.csv`
+
+Then, use our python script “visiumConverter.py” as following: `python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor`
+
+## Dependencies
+
+###### - Pandas
+
+```bash
+pip install pandas
+```
+
 # DATA
 
 All data available : (Article - data)
