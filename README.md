@@ -118,9 +118,11 @@ You need cellranger of [10xgenomics](https://support.10xgenomics.com/single-cell
 
 ## Run
 
-First, use this command on “cellranger” to convert the h5 matrix to csv format: `./bin/cellranger mat2csv Feature/cell matrix_HDF5.h5 out_file_matrix.csv`
+First, use this command on “cellranger” to convert the h5 matrix to csv format: 
+`./bin/cellranger mat2csv Feature/cell matrix_HDF5.h5 out_file_matrix.csv`
 
-Then, use our python script “visiumConverter.py” as following: `python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor`
+Then, use our python script “visiumConverter.py” as following: 
+`python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor`
 
 ## Dependencies
 
