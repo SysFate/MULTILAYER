@@ -11,7 +11,7 @@ def parseArguments():
 	parser.add_argument('-i', help='Input matrix with : - bacordes (XxY) with header \'bc\'. - Genes with header \'gene\'. - Genes counts with header \'count\'', required=True)
 	parser.add_argument('-o', help='Output matrix formatted for Multilayer tool.', required=True)
 	parser.add_argument('-cx', help='Compressor factor.', required=True)
-	parser.add_argument('-cy', help='Compressor factor for Y (if cy is not assign, cx will be apply to x and y).')
+	parser.add_argument('-cy', help='Compressor factor for Y (if cy is not assigned, cx will be apply to x and y).')
 	args = parser.parse_args()
 	return args
 
