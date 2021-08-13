@@ -177,4 +177,4 @@ All data available : (Article - data)
 
 Multilayer [tutorial](/MULTILAYER-Tutorial.pdf)
 
-<a href="https://www.youtube.com/watch?v=zByIdsUyJPg&ab_channel=MultilayerSysFate"><img src="logo/youtube_logo.png" width="30%" height="30%"></a>
+<a href="https://www.youtube.com/channel/UCoGGql3etFGqHifFf4uDSYQ"><img src="logo/youtube_logo.png" width="30%" height="30%"></a>
