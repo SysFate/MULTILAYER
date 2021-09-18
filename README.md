@@ -5,6 +5,8 @@
 
 <a href="https://www.cell.com/cell-systems/fulltext/S2405-4712(21)00151-4?_returnURL=https%3A%2F%2Flinkinghub.elsevier.com%2Fretrieve%2Fpii%2FS2405471221001514%3Fshowall%3Dtrue"><img src="logo/doi_multilayer.png" width="30%" height="30%"></a>
 
+<a href="https://star-protocols.cell.com/protocols/998"><img src="logo/doi_multilayer_2.png" width="30%" height="30%"></a>
+
 ## Informations / Authors
 
 |         |                                                                                               |
