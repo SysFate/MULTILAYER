@@ -138,7 +138,7 @@ pip install pandas
 
 ## Description
 
-A converter for [Enrichr librairies](https://maayanlab.cloud/Enrichr/#libraries). Once the librairy converted, you have to place it in the directory 'GO_DB'.
+A converter for [Enrichr libraries](https://maayanlab.cloud/Enrichr/#libraries). Once the library converted, you have to place it in the directory called 'GO DB'.
 
 ## Run
 

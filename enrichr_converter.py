@@ -6,14 +6,12 @@ import os
 
 def parseArguments():
 	parser = argparse.ArgumentParser(description='Enrichr converter provided by SysFate Team.')
-	parser.add_argument('-i', help='Input : enrichr librairy.', required=True)
-	#parser.add_argument('-o', help='Output : GO DB for Multilayer.', required=True)
+	parser.add_argument('-i', help='Input : enrichr library.', required=True)
 	args = parser.parse_args()
 	return args
 
 def enrichr_converter():
 	args = parseArguments()
-	#outputFile = args.o
 	outputFile = f'{args.i[:-4]}_converted.tsv'
 	read_file = pd.read_csv(args.i, na_values='True')
 	inputFile = f'{args.i[:-3]}tsv'
