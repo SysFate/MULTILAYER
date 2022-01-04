@@ -96,7 +96,7 @@ We developed module for compress data. Multilayer compressor is able to merge se
 
 ## Run
 
-Launch : `python3 Multilayer_Compressor.py`
+Launch : `python3 Multilayer_Compressor.py -i input.tsv -o output.tsv -cx 100 -cy 100`
 
 ## Dependencies
 
@@ -125,6 +125,24 @@ First, use this command on “cellranger” to convert the h5 matrix to csv form
 
 Then, use our python script “visiumConverter.py” as following: 
 `python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor`
+
+## Dependencies
+
+###### - Pandas
+
+```bash
+pip install pandas
+```
+
+# ENRICHR CONVERTER
+
+## Description
+
+A converter for [Enrichr librairies](https://maayanlab.cloud/Enrichr/#libraries). Once the librairy converted, you have to place it in the directory 'GO_DB'.
+
+## Run
+
+Launch : `python3 enrichr_converter.py -i input.tsv`
 
 ## Dependencies
 

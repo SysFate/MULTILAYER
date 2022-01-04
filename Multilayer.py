@@ -168,7 +168,7 @@ class StartGUI(tk.Tk):
 		dic_gexel_raw = {}
 		listGexelCountRaw = []
 		sample.raw = sample.raw.loc[(sample.raw.sum(axis=1) != 0), (sample.raw.sum(axis=0) != 0)]
-		sample.raw.index = sample.raw.index
+		sample.raw.index = sample.raw.index.str.upper()
 		if runObject.mode == 'explore':
 			dic_gexel_raw = dict(sample.raw.apply(lambda x : self.createGexel(x, listGexelCountRaw, runObject), axis=0))
 			sample.maxCountRaw =  max(listGexelCountRaw)
@@ -186,13 +186,13 @@ class StartGUI(tk.Tk):
 				print(f'### - Loading Normalisation file - {sample.name}')
 				if runObject.transpose == True:
 					sample.norm = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float).transpose()
-					sample.norm.index = sample.norm.index
+					sample.norm.index = sample.norm.index.str.upper()
 					if runObject.diff == ['']:
 						sample.diff = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float).transpose()
 						sample.diff += 1
 				else:
 					sample.norm = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float)
-					sample.norm.index = sample.norm.index
+					sample.norm.index = sample.norm.index.str.upper()
 					if runObject.diff == ['']:
 						sample.diff = pd.read_csv(runObject.norm[0], sep='\t', index_col=[0]).astype(float)
 						sample.diff += 1
@@ -268,7 +268,7 @@ class StartGUI(tk.Tk):
 		"""
 		Create GeneSample object (row from matrix)
 		"""
-		geneSample = GeneSample(x.name)
+		geneSample = GeneSample(x.name.upper())
 		geneSample.maxCount = max(x)
 		geneSample.minCount = min(x)
 		geneSample.dic_coordinate_count = x.to_dict()
@@ -401,7 +401,7 @@ class StartGUI(tk.Tk):
 		dfQN -= 1
 		sample.norm = dfQN
 		sample.diff = dfDiff
-		sample.norm.index = sample.norm.index
+		sample.norm.index = sample.norm.index.str.upper()
 		runObject.norm.append(sample.norm)
 		if runObject.saveMatrix == True:
 			print('SAVE NORM MATRIX')
@@ -423,7 +423,7 @@ class StartGUI(tk.Tk):
 			else:
 				sample.diff = pd.read_csv(runObject.diff[0], sep='\t', index_col=[0]).astype(float)
 		df = sample.diff.copy()
-		sample.diff.index = sample.diff.index
+		sample.diff.index = sample.diff.index.str.upper()
 		df['positive'] = df[df >= runObject.upDiffThreshold].count(axis=1).values
 		df['negative'] = df[df <= runObject.downDiffThreshold].count(axis=1).values
 		runObject.dicSample[sample.name].infoUp = list(zip(df['positive'].values.tolist(), df.index.values.tolist()))
@@ -934,7 +934,7 @@ class AutocompleteEntry(Entry):
 				self.lb.activate(index) 
 
 	def comparison(self):
-		pattern = re.compile(f'{self.var.get()}.*',  flags=re.IGNORECASE)
+		pattern = re.compile(f'{self.var.get().upper()}.*')
 		return [w for w in self.list_input_gene_name if re.match(pattern, w)]
 
 class GoGUI(object):
@@ -1121,7 +1121,7 @@ class GoGUI(object):
 			tot_genes = [item for sublist in tot_genes for item in sublist]
 			tot_genes = set(tot_genes)
 			nb_totgen = len(tot_genes)
-			self.listGeneQuery = [x.split(' ')[0] for x in self.listGeneQuery]
+			self.listGeneQuery = [x.split(' ')[0].upper() for x in self.listGeneQuery]
 			similarity = geneGOList.apply(lambda x: self.fisher(self.listGeneQuery, x, nb_totgen))
 			similarity = similarity.sort_values()
 			similarity.name = 'p-values'
@@ -2698,7 +2698,7 @@ class matrixGUI(object):
 		listData.sort(key=lambda x: x[0], reverse = True)
 		for i in listData:
 			if i[0] >= self.runObject.minPattern:
-				listBox.insert(END, f'{i[0]} | {i[1]}')
+				listBox.insert(END, f'{i[0]} | {i[1].upper()}')
 
 	def hideMenu(self):
 		"""
