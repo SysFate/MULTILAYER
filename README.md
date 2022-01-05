@@ -30,7 +30,10 @@ defined as gene expression elements or gexels), combined with community detectio
 
 ## Run
 
-Launch : `python3 Multilayer.py`
+Launch : 
+```python
+python3 Multilayer.py
+```
  
 ## Dependencies
 
@@ -96,7 +99,10 @@ We developed module for compress data. Multilayer compressor is able to merge se
 
 ## Run
 
-Launch : `python3 Multilayer_Compressor.py -i input.tsv -o output.tsv -cx 100 -cy 100`
+Launch : 
+```python
+python3 Multilayer_Compressor.py -i input.tsv -o output.tsv -cx 100 -cy 100
+```
 
 ## Dependencies
 
@@ -124,7 +130,9 @@ First, use this command on “cellranger” to convert the h5 matrix to csv form
 `./bin/cellranger mat2csv Feature/cell matrix_HDF5.h5 out_file_matrix.csv`
 
 Then, use our python script “visiumConverter.py” as following: 
-`python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor`
+```python
+python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor
+```
 
 ## Dependencies
 
@@ -142,7 +150,10 @@ A converter for [Enrichr libraries](https://maayanlab.cloud/Enrichr/#libraries).
 
 ## Run
 
-Launch : `python3 enrichr_converter.py -i input.tsv`
+Launch : 
+```python
+python3 enrichr_converter.py -i input.tsv
+```
 
 ## Dependencies
 
