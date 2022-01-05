@@ -129,7 +129,8 @@ You need cellranger of [10xgenomics](https://support.10xgenomics.com/single-cell
 First, use this command on “cellranger” to convert the h5 matrix to csv format: 
 `./bin/cellranger mat2csv Feature/cell matrix_HDF5.h5 out_file_matrix.csv`
 
-Then, use our python script “visiumConverter.py” as following: 
+Then, use our python script “visiumConverter.py” as following:
+
 ```python
 python3 visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor
 ```
@@ -151,6 +152,7 @@ A converter for [Enrichr libraries](https://maayanlab.cloud/Enrichr/#libraries).
 ## Run
 
 Launch : 
+
 ```python
 python3 enrichr_converter.py -i input.tsv
 ```
