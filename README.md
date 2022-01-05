@@ -131,7 +131,7 @@ First, use this command on “cellranger” to convert the h5 matrix to csv form
 
 Then, use our python script “visiumConverter.py” as following: 
 ```python
-python visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor
+python3 visiumConverter.py -m out_file_matrix.csv -p spatial/tissue_positions_list.csv -g raw_feature_bc_matrix/features.tsv.gz -o matrix_multilayer.tsv –compressor
 ```
 
 ## Dependencies
