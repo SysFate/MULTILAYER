@@ -31,6 +31,7 @@ from PIL import ImageTk
 from PIL import Image
 from PIL import ImageDraw
 import sys
+import re
 
 class GeneSample(object):
 	"""
