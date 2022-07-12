@@ -825,6 +825,7 @@ class ParamGUI(tk.Frame):
 				self.runObject.indexGetParameters = 1
 				self.runObject.upDiffThreshold = float(self.comboUp.get())
 				self.runObject.downDiffThreshold = float(self.comboDown.get())
+				print('\n\n\n')
 				print('==============================')
 				print('Selected Parameters')
 				print('==============================')
@@ -843,7 +844,7 @@ class ParamGUI(tk.Frame):
 				print(f'up : {self.runObject.upDiffThreshold}')
 				print(f'down : {self.runObject.downDiffThreshold}')
 				print(f'Save : {self.runObject.saveMatrix}')
-				print('==============================\n')
+				print('==============================\n\n')
 				self.controller.clusterMatrix(self.runObject)
 		except:
 			tk.messagebox.showwarning('Error with Values', 'You have to provide a value for each field.', icon='warning')
@@ -3512,6 +3513,13 @@ def main():
 	run = Run()
 	runGUI = StartGUI(run)
 	#runGUI.iconbitmap(os.path.join('logo', 'multilaye_ico.ico'))
+	print('\n')
+	print(' _      _     _   _____  _  _     ____ ___  _ _____ ____  ')
+	print('/ \__/|/ \ /\/ \ /__ __\/ \/ \   /  _ \\  \///  __//  __\ ')
+	print('| |\/||| | ||| |   / \  | || |   | / \| \  / |  \  |  \/| ')
+	print('| |  ||| \_/|| |_/\| |  | || |_/\| |-|| / /  |  /_ |    / ')
+	print('\_/  \|\____/\____/\_/  \_/\____/\_/ \|/_/   \____\\_/\_\ ')
+	print('\n')
 	runGUI.mainloop()
 	if run.indexRun == 1:
 		root = tk.Tk()
