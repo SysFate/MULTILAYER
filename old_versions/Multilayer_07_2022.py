@@ -281,13 +281,6 @@ class StartGUI(tk.Tk):
 		"""
 		print(f'### - Patterns detection {sample.name}')
 		sample.infoPattern = []
-		try:
-			if sys.argv[1] == '-output_matrix':
-				temp_df = pd.DataFrame(columns = sample.raw.columns.tolist())
-				temp_list_name = {}
-				temp_index = 0
-		except:
-			pass
 		for geneSample in dicGeneSample.keys():
 			tempListCoordinate = []
 			indexFind = 0
@@ -313,30 +306,7 @@ class StartGUI(tk.Tk):
 							listTemp.append(f'{o[0]}x{o[1]}')
 						dicGeneSample[geneSample].dic_pattern[indexFind] = listTemp
 						sample.infoPattern.append((len(listTemp), dicGeneSample[geneSample].geneID))
-						try:
-							if sys.argv[1] == '-output_matrix':
-								for numberPattern in dicGeneSample[geneSample].dic_pattern.keys():
-									temp_name = f'{dicGeneSample[geneSample].geneID} | {numberPattern}'
-									temp_list_gene = {}
-									for coor in sample.raw.columns.tolist():
-										if coor in dicGeneSample[geneSample].dic_pattern[numberPattern]:
-											temp_list_gene[coor] = 1
-										else:
-											temp_list_gene[coor] = 0
-									temp_df.loc[len(temp_df)] = temp_list_gene
-									temp_list_name[temp_index] = temp_name
-									temp_index+=1
-						except:
-							pass
-		try:
-			if sys.argv[1] == '-output_matrix':
-				temp_df = temp_df.rename(temp_list_name)
-				temp_df.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(runObject.raw[0])), 'Matrix_Sample'), f'{sample.name}_size{runObject.minPattern}_{runObject.method}_pattern_matrix.tsv'), sep='\t')
-				del(temp_df)
-				del(temp_list_name)
-		except:
-			pass
-			
+	
 	def generateMatrixSimilarity(self, dicGeneSample, runObject, pathDirSave, name):
 		"""
 		Compare all patterns and generate a similarity matrix
@@ -507,10 +477,10 @@ class StartPageGUI(tk.Frame):
 		self.runObject.mode = mode
 		if mode == 'explore':
 			self.controller.show_frame("InputGUIExplore", self.runObject)
-			#print('explore')
+			print('explore')
 		elif mode == 'cluster':
 			self.controller.show_frame("InputGUIBatch", self.runObject)
-			#print('cluster')
+			print('cluster')
 
 class InputGUIBatch(tk.Frame):
 	"""
@@ -3148,31 +3118,6 @@ class matrixGUI(object):
 			self.displayNumberPerCommunities.set(self.listBoxCommunities.size())
 		self.temp_title = f'{value} - {self.title}'
 		self.master.title(f'{value} - {self.title}')
-
-		try:
-			if sys.argv[1] == '-output_matrix':
-				tempComDic = pd.DataFrame(dic_Coordiante_Communities, index=['All Communities'])
-				uniqueValCom = set(dic_Coordiante_Communities.values())
-				list_rename_temp = {'All Communities':'All Communities'}
-				for i in uniqueValCom:
-					list_rename_temp[i+1] = f'Community {i}'
-					dic_Coordiante_Communities_temp = {}
-					for gene in dicCom.keys():
-						geneName = gene.split(' | ')[0]
-						patternNumber = int(gene.split(' | ')[1])
-						for coordinate in self.dicGeneSample[geneName].dic_pattern[patternNumber]:
-							if dicCom[gene] == i:
-								dic_Coordiante_Communities_temp[coordinate] = dicCom[gene]
-					tempComDic.loc[len(tempComDic)] = dic_Coordiante_Communities_temp
-				tempComDic = tempComDic.rename(list_rename_temp)
-				tempComDic.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(self.runObject.raw[0])), 'Matrix_Sample'), f'{self.nameSample}_size{self.runObject.minPattern}_{self.runObject.method}_communities_matrix.tsv'), sep='\t')
-				del(tempComDic)
-				del(uniqueValCom)
-				del(dic_Coordiante_Communities_temp)
-				del(list_rename_temp)
-		except:
-			pass
-
 		listColor = ['green', 'blue', 'red', 'gold', 'purple',
 			'pink', 'orange', 'yellow', 'darkgreen', 'darkred', 
 			'darkblue', 'limegreen', 'darkorange', 'deeppink', 'cyan']
