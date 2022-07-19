@@ -331,7 +331,7 @@ class StartGUI(tk.Tk):
 		try:
 			if sys.argv[1] == '-output_matrix':
 				temp_df = temp_df.rename(temp_list_name)
-				temp_df.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(runObject.raw[0])), 'Matrix_Sample'), f'{sample.name}_size{runObject.minPattern}_{runObject.method}_pattern_matrix.tsv'), sep='\t')
+				temp_df.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(runObject.raw[0])), 'Similarity_Matrix_Sample'), f'{sample.name}_size{runObject.minPattern}_{runObject.method}_pattern_matrix.tsv'), sep='\t')
 				del(temp_df)
 				del(temp_list_name)
 		except:
@@ -3165,7 +3165,7 @@ class matrixGUI(object):
 								dic_Coordiante_Communities_temp[coordinate] = dicCom[gene]
 					tempComDic.loc[len(tempComDic)] = dic_Coordiante_Communities_temp
 				tempComDic = tempComDic.rename(list_rename_temp)
-				tempComDic.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(self.runObject.raw[0])), 'Matrix_Sample'), f'{self.nameSample}_size{self.runObject.minPattern}_{self.runObject.method}_communities_matrix.tsv'), sep='\t')
+				tempComDic.to_csv(os.path.join(os.path.join(os.path.dirname(os.path.abspath(self.runObject.raw[0])), 'Similarity_Matrix_Sample'), f'{self.nameSample}_size{self.runObject.minPattern}_{self.runObject.method}_communities_matrix.tsv'), sep='\t')
 				del(tempComDic)
 				del(uniqueValCom)
 				del(dic_Coordiante_Communities_temp)
