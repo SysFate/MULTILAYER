@@ -19,6 +19,13 @@
 
 # MULTILAYER TOOL
 
+## Changelog 2024
+
+- The tool now detect automaticaly if the data are interstitial
+- Fixed pattern detection in case of interstitial data
+- Added a script to increase the number of pixels
+- Improved several graphical elements
+
 ## Description
 
 Inspired by contextual pixel classification strategies applied to image analysis, we have developed MULTILAYER, 
