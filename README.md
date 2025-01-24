@@ -96,6 +96,12 @@ pip install python-louvain
 pip install pillow
 ```
 
+###### - Scanpy (needed only for UMAP)
+
+```bash
+pip install scanpy
+```
+
 # MULTILAYER COMPRESSOR
 
 ## Description
@@ -122,6 +128,28 @@ pip install numpy
 ```bash
 pip install pandas
 ```
+
+# MULTILAYER EXPANDER
+
+## Description
+
+We developed module for extend data. Multilayer expander is able to divide one gexel into several gexels. n is the number of expansion.
+
+## Run
+
+Launch : 
+```python
+python3 multilayer-expander.py -n 1
+```
+
+## Dependencies
+
+###### - Pandas
+
+```bash
+pip install pandas
+```
+
 
 # VISIUM CONVERTER
 
