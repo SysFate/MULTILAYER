@@ -2887,6 +2887,7 @@ class matrixGUI(object):
 				self.listBoxPatterns.pack(fill=X)
 				self.GOButton = ttk.Button(self.frameInfoPattern, text = 'Gene Ontology', command = lambda : self.geneOntology(self.listGeneGO, self.listGOBank, self.temp_title))
 				self.GOButton.pack(side=BOTTOM, fill = X, pady=10)
+				ttk.Button(self.frameInfoPattern, text = 'Export cluster/gexel', command = lambda : self.export_cluster_gexel()).pack(side=BOTTOM, fill = X, pady=10)
 				self.frameInfoPattern.pack(side = BOTTOM, fill=X)
 			else:
 				self.frameThresold = tk.Frame(self.frameSearchButton)
@@ -3956,6 +3957,15 @@ class matrixGUI(object):
 			countDisplayString.set(round(countDisplay, 2))
 		except:
 			countDisplayString.set(countDisplay)
+
+	def export_cluster_gexel(self):
+		clusters = [cluster for cluster in self.runObject.dictClusterGexel.keys() for _ in self.runObject.dictClusterGexel[cluster]] #le for le plus à droite est le plus intérieur
+		gexels = [gexel for list_gexel in self.runObject.dictClusterGexel.values() for gexel in list_gexel] #le for le plus à droite est le plus intérieur
+		df = pd.DataFrame(data={'cluster':clusters,'gexel':gexels})
+		df = df.sort_values(by=['cluster'])
+		fileDir = asksaveasfilename(filetypes=[('Tabulation-separated values', '*.tsv')])
+		df.to_csv(fileDir, sep='\t', index=False)
+
 	
 
 class umapGUI(object):
@@ -3997,7 +4007,6 @@ class umapGUI(object):
 		if self.norm:
 			df = pd.read_csv(self.runObject.raw[0], sep='\t', index_col=[0]).astype(float)
 			df.index = df.index.str.upper()
-			print(df.T)
 			self.adata = sc.AnnData(df.T)
 			sc.pp.normalize_total(self.adata, target_sum=1e4, inplace = True) #target_sum=1e4 ?
 			sc.pp.log1p(self.adata, copy=False)
@@ -4041,8 +4050,11 @@ class umapGUI(object):
 		self.runObject.dictClusterGexel = dictClusterGexel
 		return dictClusterGexel
 
-
 	def wrapperPatterns(self):
+		self.mainGUI.matrixWindow('Patterns Matrix', self.runObject.dicSample[self.mainGUI.nameSample].listGexelDiff,
+			self.runObject.dicSample[self.mainGUI.nameSample].dicSampleDiff, 0, 0, 'umap', self.mainGUI.countDisplayStringDiff, self.mainGUI.nameSample, [])
+
+	def wrapperPatterns2(self):
 		self.mainGUI.patternWindow = tk.Toplevel(self.master)
 		self.patternsArgs(self.mainGUI.patternWindow)
 		self.mainGUI.patternWindow.title('Arguments for patterns')
