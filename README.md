@@ -99,9 +99,13 @@ pip install pillow
 ###### - Scanpy (needed only for UMAP)
 
 ```bash
+pip install leiden
+```
+
+```bash
 pip install scanpy
 ```
-if you use conda :
+for scanpy if you use conda :
 
 ```bash
 conda install -c conda-forge scanpy python-igraph leidenalg
