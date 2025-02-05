@@ -84,7 +84,7 @@ pip install seaborn
 pip install networkx
 ```
 
-###### - Louvain
+###### - Louvain (from Community)
 
 ```bash
 pip install python-louvain
@@ -96,16 +96,20 @@ pip install python-louvain
 pip install pillow
 ```
 
-###### - Scanpy (needed only for UMAP)
+#### Only needed for UMAP
+
+##### - Louvain (from Louvain)
 
 ```bash
-pip install leiden
+pip install louvain
 ```
+
+###### - Scanpy
 
 ```bash
 pip install scanpy
 ```
-for scanpy if you use conda :
+if you use conda :
 
 ```bash
 conda install -c conda-forge scanpy python-igraph leidenalg
