@@ -101,6 +101,11 @@ pip install pillow
 ```bash
 pip install scanpy
 ```
+if you use conda :
+
+```bash
+conda install -c conda-forge scanpy python-igraph leidenalg
+```
 
 # MULTILAYER COMPRESSOR
 
