@@ -98,7 +98,7 @@ pip install pillow
 
 #### Only needed for UMAP
 
-##### - Louvain (from Louvain)
+###### - Louvain (from Louvain)
 
 ```bash
 pip install louvain
